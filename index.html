@@ -6,10 +6,20 @@
 </head>
 
 <body>
-    <aside></aside>
+    <aside>
+        <div class="control-container">
+            <input type="text" placeholder="Search Restaurant">
+        </div>
+        <div class="restaurant-list-container">
+            <ul class="restaurant-list" data-bind="foreach: restaurant_list">
+                <li data-bind="text: name"></li>
+            </ul>
+        </div>
+    </aside>
     <section id="map"></section>
     <script src="js/jquery.min.js"></script>
-    <script async defer src="https://maps.googleapis.com/maps/api/js?libraries=places,geometry,drawing&key=AIzaSyD8-Remi8efHedF6YYqHpeLb4NvrGpBxd4&callback=init_map"></script>
+    <script src="js/knockout.js"></script>
+    <script async src="https://maps.googleapis.com/maps/api/js?libraries=places,geometry,drawing&key=AIzaSyD8-Remi8efHedF6YYqHpeLb4NvrGpBxd4&callback=init_map"></script>
     <script src="js/app.js"></script>
 </body>
 
