@@ -63,3 +63,7 @@ li:focus {
     height: 100vh;
     z-index: 1;
 }
+
+.infowindow-container {
+    width: 250;
+}
