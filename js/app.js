@@ -8,16 +8,32 @@ let Restaurant = function(data) {
     this.lng = ko.observable(data.location.longitude);
     this.name = ko.observable(data.name);
     this.selected = ko.observable(false);
+    this.cuisines = ko.observableArray(data.cuisines.split(", "));
+    this.price = ko.observable(data.average_cost_for_two);
 }
 
 let ViewModel = function() {
     let self = this;
     this.restaurant_list = ko.observableArray();
+    this.cuisine_list = ko.observableArray();
     this.current_restaurant = ko.observable();
 
     $.getJSON("restaurants_zomato.json", function(json) {
         $.each(json.restaurants, function() {
             self.restaurant_list.push(new Restaurant(this.restaurant));
+        });
+
+        $.each(self.restaurant_list(), function() {
+            $.each(this.cuisines(), function() {
+                let cuisine = String(this);
+                let match = ko.utils.arrayFirst(self.cuisine_list(), function(item) {
+                    return cuisine === item;
+                });
+                if (!match) {
+                    self.cuisine_list.push(cuisine);
+                }
+
+            })
         });
     });
 
@@ -35,7 +51,7 @@ let ViewModel = function() {
 
         if (marker) {
             toggle_bounce(marker);
-            populate_infowindow(marker, this)
+            populate_infowindow(marker, this);
         }
     }
 }
@@ -115,7 +131,7 @@ function populate_infowindow(marker, restaurant) {
             headers: { "user-key": "000e28228e4fb09d7e02710d59331fbe" },
             url: details_url
         }).done(function(result) {
-            console.log(result);
+            //console.log(result);
             restaurant_html = `
             <div class="infowindow-container">
                 <h1>${result.name}</h1>
@@ -138,6 +154,20 @@ function populate_infowindow(marker, restaurant) {
 function init_map_with_delay() {
     window.setTimeout(init_map, 1000);
 }
+
+let handle = $("#custom-handle");
+$("#price-slider").slider({
+    value: 1250,
+    min: 500,
+    max: 3000,
+    step: 50,
+    create: function() {
+        handle.text('₱' + $(this).slider("value"));
+    },
+    slide: function(event, ui) {
+        handle.text(`₱ ${ui.value}`);
+    }
+});
 
 let view_model = new ViewModel();
 ko.applyBindings(view_model);

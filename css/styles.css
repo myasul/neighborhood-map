@@ -20,13 +20,33 @@ aside {
 
 .control-container {
     background-color: #1D272F;
-    height: calc(15vh - 1px);
+    height: calc(20vh - 1px);
     border-bottom: 1px solid black;
+    padding-left: 1.5em;
 }
 
-.control-container input {
-    display: block;
-    margin: 0 auto;
+.control-container p {
+    margin: 0;
+    padding: 0.5em 0;
+    color: white;
+}
+
+#price-slider {
+    width: 250px;
+    margin-top: 15px;
+}
+
+#custom-handle {
+    width: 3.5em;
+    height: 1.6em;
+    top: 50%;
+    margin-top: -.8em;
+    text-align: center;
+    line-height: 1.6em;
+}
+
+#cuisine-list {
+    font-size: 1em;
 }
 
 ul {
@@ -51,7 +71,7 @@ li:focus {
 }
 
 .restaurant-list-container {
-    height: 85vh;
+    height: 80vh;
     overflow-y: auto;
     position: relative;
 }
