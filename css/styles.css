@@ -13,14 +13,14 @@ aside {
     top: 0;
     left: 0;
     background-color: #2F3D48;
-    width: 300px;
+    width: 330px;
     height: 100vh;
     z-index: 2;
 }
 
 .control-container {
     background-color: #1D272F;
-    height: calc(20vh - 1px);
+    height: calc(25vh - 1px);
     border-bottom: 1px solid black;
     padding-left: 1.5em;
 }
@@ -45,6 +45,18 @@ aside {
     line-height: 1.6em;
 }
 
+.control-container a {
+    font-size: 1em;
+    border: 1px solid #999;
+    background-color: white;
+    color: black;
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 5px;
+    text-decoration: none;
+    margin-top: 18px;
+}
+
 #cuisine-list {
     font-size: 1em;
 }
@@ -56,7 +68,7 @@ ul {
 
 li {
     margin: 1em;
-    color: #999999;
+    color: #999;
 }
 
 .selected {
@@ -71,7 +83,7 @@ li:focus {
 }
 
 .restaurant-list-container {
-    height: 80vh;
+    height: 75vh;
     overflow-y: auto;
     position: relative;
 }

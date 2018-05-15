@@ -23,6 +23,7 @@ let ViewModel = function() {
             self.restaurant_list.push(new Restaurant(this.restaurant));
         });
 
+
         $.each(self.restaurant_list(), function() {
             $.each(this.cuisines(), function() {
                 let cuisine = String(this);
@@ -32,9 +33,41 @@ let ViewModel = function() {
                 if (!match) {
                     self.cuisine_list.push(cuisine);
                 }
-
             })
         });
+
+    });
+
+    $("#search").on("click", function() {
+        let chosen_category = $("#cuisine-list").val();
+        let chosen_price = $('#price-slider').slider("option", "value");
+        self.restaurant_list.removeAll();
+
+        $.getJSON("restaurants_zomato.json", function(json) {
+            $.each(json.restaurants, function() {
+                let categories = this.restaurant.cuisines.split(", ");
+                let price = this.restaurant.average_cost_for_two;
+                match = categories.find(function(category) {
+                    return category == chosen_category;
+                });
+                if (match && price <= chosen_price) {
+                    self.restaurant_list.push(new Restaurant(this.restaurant));
+                }
+            });
+
+            hide_markers();
+            show_markers(self.restaurant_list());
+        });
+    });
+
+    $("#show-all").on("click", function() {
+        self.restaurant_list.removeAll();
+        $.getJSON("restaurants_zomato.json", function(json) {
+            $.each(json.restaurants, function() {
+                self.restaurant_list.push(new Restaurant(this.restaurant));
+            });
+        });
+        show_all_markers();
     });
 
     if (!markers) {
@@ -131,7 +164,6 @@ function populate_infowindow(marker, restaurant) {
             headers: { "user-key": "000e28228e4fb09d7e02710d59331fbe" },
             url: details_url
         }).done(function(result) {
-            //console.log(result);
             restaurant_html = `
             <div class="infowindow-container">
                 <h1>${result.name}</h1>
@@ -155,9 +187,31 @@ function init_map_with_delay() {
     window.setTimeout(init_map, 1000);
 }
 
+function hide_markers() {
+    $.each(markers, function() {
+        this.setMap(null);
+    });
+}
+
+function show_markers(restaurant_list) {
+    $.each(restaurant_list, function() {
+        let marker = find_marker(this);
+
+        if (marker) {
+            marker.setMap(map);
+        }
+    });
+}
+
+function show_all_markers() {
+    $.each(markers, function() {
+        this.setMap(map);
+    });
+}
+
 let handle = $("#custom-handle");
 $("#price-slider").slider({
-    value: 1250,
+    value: 3000,
     min: 500,
     max: 3000,
     step: 50,
