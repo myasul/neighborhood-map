@@ -6,12 +6,13 @@ let Restaurant = function(data) {
     this.lat = ko.observable(data.location.latitude);
     this.lng = ko.observable(data.location.longitude);
     this.name = ko.observable(data.name);
+    this.selected = ko.observable(false);
 }
 
 let ViewModel = function() {
-    console.log(new Date());
     let self = this;
     this.restaurant_list = ko.observableArray();
+    this.current_restaurant = ko.observable();
 
     $.getJSON("restaurants_zomato.json", function(json) {
         $.each(json.restaurants, function() {
@@ -22,10 +23,39 @@ let ViewModel = function() {
     if (!markers) {
         init_markers(this.restaurant_list);
     }
+
+    this.set_current_restaurant = function() {
+        if (self.current_restaurant()) {
+            self.current_restaurant().selected(false);
+        }
+        self.current_restaurant(this);
+        self.current_restaurant().selected(true);
+        let marker = find_marker(this);
+
+        if (marker) {
+            marker.setAnimation(google.maps.Animation.BOUNCE);
+            window.setTimeout(function() {
+                marker.setAnimation(null);
+            }, 2000);
+        }
+    }
+}
+
+function find_marker(rst) {
+    let rst_lat = rst.lat();
+    let rst_lng = rst.lng();
+    let marker;
+    for (let i = 0; i < markers.length; i++) {
+        let marker_lat = markers[i].getPosition().lat().toFixed(10);
+        let marker_lng = markers[i].getPosition().lng().toFixed(10);
+        if ((rst_lat == marker_lat) && (rst_lng == marker_lng)) {
+            return markers[i];
+        }
+    }
+    return null;
 }
 
 function init_map() {
-    console.log(new Date());
     map = new google.maps.Map($('#map').get(0), {
         center: { lat: 14.5408671, lng: 121.0503183 },
         zoom: 15,
@@ -43,7 +73,6 @@ function init_markers(restaurant_list, bounds) {
         let location = {};
         location.lat = parseFloat(this.lat());
         location.lng = parseFloat(this.lng());
-        console.log(location);
         var marker = new google.maps.Marker({
             position: location,
             animation: google.maps.Animation.DROP,
@@ -55,20 +84,15 @@ function init_markers(restaurant_list, bounds) {
         markers.push(marker); // TODO: check if needed
         bounds.extend(location);
     });
-    console.log(bounds);
     return bounds;
 }
 
 function toggle_bounce() {
     var self = this;
-    if (!this.getAnimation()) {
-        this.setAnimation(google.maps.Animation.BOUNCE);
-        window.setTimeout(function() {
-            self.setAnimation(null);
-        }, 2000)
-    } else {
-        this.setAnimation(null);
-    }
+    this.setAnimation(google.maps.Animation.BOUNCE);
+    window.setTimeout(function() {
+        self.setAnimation(null);
+    }, 2000);
 }
 
 function init_map_with_delay() {

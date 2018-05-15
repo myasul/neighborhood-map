@@ -12,7 +12,7 @@
         </div>
         <div class="restaurant-list-container">
             <ul class="restaurant-list" data-bind="foreach: restaurant_list">
-                <li data-bind="text: name"></li>
+                <li data-bind="text: name, click: $parent.set_current_restaurant, css: {selected: selected() == true}"></li>
             </ul>
         </div>
     </aside>
