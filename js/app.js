@@ -44,7 +44,10 @@ let ViewModel = function() {
             })
         });
 
-    });
+    }).fail(function(error) {
+        console.log(error.responseText);
+        alert("An error has been encountered. Please consult with your system administrator.");
+    });;
 
     // Filter feature
     $("#search").on("click", function() {
@@ -55,7 +58,7 @@ let ViewModel = function() {
         self.restaurant_list.removeAll();
 
         // Populate the restaurant list
-        $.getJSON("restaurants_zomato.json", function(json) { // TODO :: add fail function
+        $.getJSON("restaurants_zomato.json", function(json) {
             $.each(json.restaurants, function() {
                 let categories = this.restaurant.cuisines.split(", ");
                 let price = this.restaurant.average_cost_for_two;
@@ -72,6 +75,9 @@ let ViewModel = function() {
             // markers of the filtered restaurants
             hide_markers();
             show_markers(self.restaurant_list());
+        }).fail(function(error) {
+            console.log(error.responseText);
+            alert("An error has been encountered. Please consult with your system administrator.");
         });
     });
 
@@ -214,7 +220,10 @@ function populate_infowindow(marker, restaurant) {
             // Populate infowindow
             infowindow.setContent(restaurant_html);
             infowindow.open(map, marker);
-        }).fail(function(result) {}); // TODO :: populate fail function
+        }).fail(function(error) {
+            console.log(error.responseJSON);
+            alert("An error has been encountered. Please consult with your system administrator.");
+        });
     } else {
         // If the user clicks on the same marker, reopen it.
         infowindow.close();
