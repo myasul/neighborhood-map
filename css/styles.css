@@ -8,19 +8,45 @@ body {
     font-family: 'Open Sans', sans-serif;
 }
 
+header {
+    display: flex;
+    background-color: #1D272F;
+    height: 7vh;
+}
+
+header img {
+    padding-left: 10px;
+    padding-top: 5px;
+    height: 35px;
+    width: 40px;
+    margin: px auto;
+}
+
+header img:hover {
+    cursor: pointer;
+}
+
+header h1 {
+    margin: 0 auto;
+    text-align: center;
+    color: white;
+}
+
+main {
+    display: flex;
+    flex-wrap: wrap;
+}
+
 aside {
-    position: absolute;
-    top: 0;
-    left: 0;
     background-color: #2F3D48;
     width: 330px;
-    height: 100vh;
-    z-index: 2;
+    height: 93vh;
+    transition: 0.3s width;
 }
 
 .control-container {
-    background-color: #1D272F;
-    height: calc(25vh - 1px);
+    background-color: #2F3D48;
+    height: calc(26vh - 1px);
     border-bottom: 1px solid black;
     padding-left: 1.5em;
 }
@@ -83,19 +109,61 @@ li:focus {
 }
 
 .restaurant-list-container {
-    height: 75vh;
+    height: 67vh;
     overflow-y: auto;
-    position: relative;
+}
+
+.slide {
+    width: 0;
+    visibility: hidden;
+    transition: 0.3s width, 0.3s visibility;
+}
+
+.hide {
+    visibility: hidden;
 }
 
 #map {
     background-color: gray;
     margin: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 1;
+    width: calc(100% - 330px);
+    height: 93vh;
+    transition: 0.3s width;
 }
 
 .infowindow-container {
     width: 250;
+}
+
+@media screen and (min-height:680px) {
+    header {
+        height: 4.5vh;
+    }
+    .control-container {
+        height: calc(18vh - 1px);
+    }
+    #map {
+        height: 95.5vh;
+    }
+    .restaurant-list-container {
+        height: 77.5vh;
+    }
+    aside {
+        height: 95.5vh;
+    }
+}
+
+@media screen and (max-height: 670px) {
+    header {
+        height: 7vh;
+    }
+    body {
+        font-size: 12px;
+    }
+    .control-container {
+        height: calc(28vh - 1px);
+    }
+    .restaurant-list-container {
+        height: 65vh;
+    }
 }

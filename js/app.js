@@ -1,6 +1,7 @@
 let map;
 let infowindow;
 let markers = [];
+let toggled = false;
 
 // Restaurant Model
 let Restaurant = function(data) {
@@ -260,6 +261,44 @@ function show_all_markers() {
         this.setAnimation(google.maps.Animation.DROP);
     });
 }
+
+$("header img").click(function() {
+    $("aside").toggleClass('slide');
+    $(".control-container ").toggleClass('hide');
+    $("#price-slider").toggleClass('hide');
+    $("#custom-handle").toggleClass('hide');
+    $("#map").width()
+    if (!toggled) {
+        $("#map").width("100%");
+        toggled = true;
+    } else {
+        $("#map").css('width', 'calc(100% - 330px)');
+        toggled = false;
+    }
+
+});
+
+$(window).resize(function() {
+    if ($(window).width() <= 950) {
+        $("aside").addClass('slide');
+        $(".control-container ").addClass('hide');
+        $("#price-slider").addClass('hide');
+        $("#custom-handle").addClass('hide');
+        $("#map").width("100%");
+        toggled = true;
+    }
+})
+
+$(window).ready(function() {
+    if ($(window).width() <= 950) {
+        $("aside").addClass('slide');
+        $(".control-container ").addClass('hide');
+        $("#price-slider").addClass('hide');
+        $("#custom-handle").addClass('hide');
+        $("#map").width("100%");
+        toggled = true;
+    }
+});
 
 // Jquery UI Slider
 let handle = $("#custom-handle");

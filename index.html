@@ -3,31 +3,39 @@
 <head>
     <title>My Neighborhood Map</title>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/jquery-ui.min.css">
 </head>
 
 <body>
-    <aside>
-        <div class="control-container">
-            <p>Category:</p>
-            <select id="category-list" data-bind="options: category_list"></select>
-            <p>Price Range:</p>
-            <div id="price-slider">
-                <div id="custom-handle" class="ui-slider-handle"></div>
+    <header>
+        <img src="img/burger.svg">
+        <h1>Restaurant Finder</h1>
+    </header>
+    <main>
+        <aside>
+            <div class="control-container">
+                <p>Category:</p>
+                <select id="category-list" data-bind="options: category_list"></select>
+                <p>Price Range:</p>
+                <div id="price-slider">
+                    <div id="custom-handle" class="ui-slider-handle"></div>
+                </div>
+                <a id="search" href="#">Search</a>
+                <a id="show-all" href="#">Show All</a>
             </div>
-            <a id="search" href="#">Search</a>
-            <a id="show-all" href="#">Show All</a>
-        </div>
-        <div class="restaurant-list-container">
-            <ul class="restaurant-list" data-bind="foreach: restaurant_list">
-                <li data-bind="text: name, click: $parent.set_current_restaurant, css: {selected: selected() == true}"></li>
-            </ul>
-        </div>
-    </aside>
-    <section id="map"></section>
+            <div class="restaurant-list-container">
+                <ul class="restaurant-list" data-bind="foreach: restaurant_list">
+                    <li data-bind="text: name, click: $parent.set_current_restaurant, css: {selected: selected() == true}"></li>
+                </ul>
+            </div>
+        </aside>
+        <section id="map"></section>
+    </main>
     <script defer src="js/jquery.min.js"></script>
     <script defer src="js/jquery-ui.min.js"></script>
+    <script defer src="js/jquery.ui.touch-punch.min.js"></script>
     <script defer src="js/knockout.js"></script>
     <script defer src="js/app.js"></script>
     <script defer src="https://maps.googleapis.com/maps/api/js?libraries=places,geometry,drawing&key=AIzaSyD8-Remi8efHedF6YYqHpeLb4NvrGpBxd4&callback=init_map_with_delay"></script>
