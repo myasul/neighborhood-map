@@ -40,8 +40,18 @@ main {
 aside {
     background-color: #2F3D48;
     width: 330px;
-    height: 93vh;
     transition: 0.3s width;
+}
+
+.location-container {
+    color: white;
+    height: calc(13vh - 1px);
+    border-bottom: 1px solid black;
+    padding-left: 1.5em;
+}
+
+#country-list {
+    width: 100px;
 }
 
 .control-container {
@@ -83,7 +93,9 @@ aside {
     margin-top: 18px;
 }
 
-#category-list {
+#category-list,
+#country-list,
+#city_autocomplete {
     font-size: 1em;
 }
 
@@ -109,7 +121,7 @@ li:focus {
 }
 
 .restaurant-list-container {
-    height: 67vh;
+    height: 49vh;
     overflow-y: auto;
 }
 
@@ -135,7 +147,7 @@ li:focus {
     width: 250;
 }
 
-@media screen and (min-height:680px) {
+@media screen and (min-height:710px) {
     header {
         height: 4.5vh;
     }
@@ -147,9 +159,6 @@ li:focus {
     }
     .restaurant-list-container {
         height: 77.5vh;
-    }
-    aside {
-        height: 95.5vh;
     }
 }
 

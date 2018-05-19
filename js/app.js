@@ -1,6 +1,7 @@
 let map;
 let infowindow;
 let markers = [];
+let autocomplete;
 let toggled = false;
 
 // Restaurant Model
@@ -14,12 +15,20 @@ let Restaurant = function(data) {
     this.price = ko.observable(data.average_cost_for_two);
 }
 
+// Country Model
+let Country = function(data) {
+    this.name = ko.observable(data.name);
+    this.code = ko.observable(data.code);
+}
+
 let ViewModel = function() {
     let self = this;
     // Restaurant list. Choices provided to the user that will be displayed in the side bar.
     this.restaurant_list = ko.observableArray();
     // List of categories. This will be used as filter.
     this.category_list = ko.observableArray();
+    // List of countries.
+    this.country_list = ko.observableArray();
     // The restaurant that is selected by the user.
     this.current_restaurant = ko.observable();
 
@@ -42,13 +51,19 @@ let ViewModel = function() {
                 if (!match) {
                     self.category_list.push(category);
                 }
-            })
+            });
         });
 
     }).fail(function(error) {
         console.log(error.responseText);
         alert("An error has been encountered. Please consult with your system administrator.");
     });;
+
+    $.getJSON("countries.json", function(json) {
+        $.each(json, function() {
+            self.country_list.push(new Country(this));
+        });
+    });
 
     // Filter feature
     $("#search").on("click", function() {
@@ -142,13 +157,77 @@ function init_map() {
         center: { lat: 14.5408671, lng: 121.0503183 },
         zoom: 15,
     });
-    infowindow = new google.maps.InfoWindow();
     let bounds = new google.maps.LatLngBounds();
+    infowindow = new google.maps.InfoWindow();
+
+    autocomplete = new google.maps.places.Autocomplete(
+        ($("#city_autocomplete").get(0)), {
+            types: ['(cities)'],
+            componentRestrictions: { 'country': [] }
+        }
+    );
+
+    autocomplete.addListener('place_changed', on_place_changed);
+
+    $("#country-list").change(function() {
+        autocomplete.setComponentRestrictions(get_country);
+    });
+
+    $("#city_autocomplete").keydown(function() {
+        if (event.which == 13) {
+            on_place_entered();
+        }
+    });
+
     if (!view_model.restaurant_list().length == 0) {
         bounds = init_markers(view_model.restaurant_list(), bounds);
         // Make sure that all markers are visible in the map
         map.fitBounds(bounds);
         map.setZoom(16);
+    }
+}
+
+function on_place_changed() {
+    let place = autocomplete.getPlace();
+    if (place.geometry) {
+        map.panTo(place.geometry.location);
+        map.setZoom(15);
+    } else {
+        $("#city_autocomplete").val('');
+    }
+}
+
+function on_place_entered() {
+    let geocoder = new google.maps.Geocoder();
+    let country = $("#country-list").val();
+
+    let city = $("#city_autocomplete").val();
+    if (!city) {
+        alert("Please enter a valid city.");
+    } else {
+        geocoder.geocode({
+                'address': city,
+                componentRestrictions: get_country()
+            },
+            function(results, status) {
+                if (status == google.maps.GeocoderStatus.OK) {
+                    let location = results[0].geometry.location;
+                    map.panTo(location);
+                    map.setZoom(15);
+                } else {
+                    alert("We could not find the specified location. Please enter a valid city.");
+                }
+            });
+    }
+}
+
+function get_country() {
+    let empty_array = [];
+    let country = $("#country-list").val();
+    if (country == 'AA') {
+        return {};
+    } else {
+        return { 'country': country };
     }
 }
 
@@ -262,6 +341,7 @@ function show_all_markers() {
     });
 }
 
+// Burger icon that will toggle to display the restaurant list
 $("header img").click(function() {
     $("aside").toggleClass('slide');
     $(".control-container ").toggleClass('hide');
@@ -278,6 +358,7 @@ $("header img").click(function() {
 
 });
 
+// Hide the restaurant list if the screen of the user is less
 $(window).resize(function() {
     if ($(window).width() <= 950) {
         $("aside").addClass('slide');
@@ -289,6 +370,8 @@ $(window).resize(function() {
     }
 })
 
+// Hide the restaurant list if the screen of the user is less
+// than 950 pixels (applies to tablets and mobile phones)
 $(window).ready(function() {
     if ($(window).width() <= 950) {
         $("aside").addClass('slide');
