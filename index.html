@@ -17,16 +17,20 @@
         <aside>
             <div class="location-container">
                 <p>Find Restaurants in:</p>
-                <input type="text" placeholder="Type name of the city" id="city_autocomplete">
+                <label class="country-label" for="country-list">Country:</label>
                 <select id="country-list" data-bind="options: country_list, 
                                                     optionsText: 'name',
                                                     optionsValue: 'code'" ,></select>
+                <br><br>
+                <label for="city_autocomplete">City: </label>
+                <input type="text" id="city_autocomplete">
+
             </div>
             <div class="control-container">
-                <p>Category:</p>
+                <label for="category-list">Category:</label>
                 <select id="category-list" data-bind="options: category_list"></select>
-                <p>Price Range:</p>
-                <div id="price-slider">
+                <label for="cost-slider">Average Cost for Two:</label>
+                <div id="cost-slider">
                     <div id="custom-handle" class="ui-slider-handle"></div>
                 </div>
                 <a id="search" href="#">Search</a>

@@ -2,17 +2,39 @@ let map;
 let infowindow;
 let markers = [];
 let autocomplete;
+let bounds;
 let toggled = false;
+const ZOMATO_KEY = '000e28228e4fb09d7e02710d59331fbe';
 
 // Restaurant Model
-let Restaurant = function(data) {
-    this.restaurant_id = ko.observable(data.id);
-    this.lat = ko.observable(data.location.latitude);
-    this.lng = ko.observable(data.location.longitude);
-    this.name = ko.observable(data.name);
-    this.selected = ko.observable(false);
-    this.categories = ko.observableArray(data.cuisines.split(", "));
-    this.price = ko.observable(data.average_cost_for_two);
+let Restaurant = function() {
+    this.restaurant_id = ko.observable();
+    this.lat = ko.observable();
+    this.lng = ko.observable();
+    this.name = ko.observable();
+    this.selected = ko.observable();
+    this.categories = ko.observableArray();
+    this.average_cost_for_two = ko.observable();
+
+    this.create_from_search = function(data) {
+        this.restaurant_id(data.restaurant_id);
+        this.lat(data.lat);
+        this.lng(data.lng);
+        this.name(data.name);
+        this.selected(data.selected);
+        this.categories(data.categories);
+        this.average_cost_for_two(data.average_cost_for_two);
+    }
+
+    this.create_from_json = function(data) {
+        this.restaurant_id(data.id);
+        this.lat(data.location.latitude);
+        this.lng(data.location.longitude);
+        this.name(data.name);
+        this.selected(false);
+        this.categories(data.cuisines.split(", "));
+        this.average_cost_for_two(data.average_cost_for_two);
+    }
 }
 
 // Country Model
@@ -34,31 +56,20 @@ let ViewModel = function() {
 
     // Currently, the list of restaurants is saved in retaurants_zomato.json
     // I used Zomato /search API to fetch the list of restaurants within the vicinity of Taguig.
-    $.getJSON("restaurants_zomato.json", function(json) {
-        // Populate the restaurant list by creating restaurant objects
-        $.each(json.restaurants, function() {
-            self.restaurant_list.push(new Restaurant(this.restaurant));
-        });
+    if (localStorage.length == 0) {
+        $.getJSON("restaurants_zomato.json", function(json) {
+            populate_restaurant_list_from_json(json.restaurants, self);
+            populate_category_list(self);
+        }).fail(function(error) {
+            console.log(error.responseText);
+            alert("An error has been encountered. Please consult with your system administrator.");
+        });;
+    } else {
+        populate_restaurant_list_from_localstorage(self);
+        populate_category_list(self);
+    }
 
-        // Populate category list by fetching all the cuisines in all the restaurants
-        $.each(self.restaurant_list(), function() {
-            $.each(this.categories(), function() {
-                let category = String(this);
-                // Make sure that all the categories saved do not have duplicates
-                let match = ko.utils.arrayFirst(self.category_list(), function(item) {
-                    return category === item;
-                });
-                if (!match) {
-                    self.category_list.push(category);
-                }
-            });
-        });
-
-    }).fail(function(error) {
-        console.log(error.responseText);
-        alert("An error has been encountered. Please consult with your system administrator.");
-    });;
-
+    // Populate the country drop down.
     $.getJSON("countries.json", function(json) {
         $.each(json, function() {
             self.country_list.push(new Country(this));
@@ -68,51 +79,41 @@ let ViewModel = function() {
     // Filter feature
     $("#search").on("click", function() {
         let chosen_category = $("#category-list").val();
-        let chosen_price = $('#price-slider').slider("option", "value");
+        let chosen_cost = $('#cost-slider').slider("option", "value");
+        let restaurant_count = localStorage.length;
         // Remove all the current restaurants so that we could populate it
         // with the restaurants that satisfy the filters specified by the user
         self.restaurant_list.removeAll();
 
-        // Populate the restaurant list
-        $.getJSON("restaurants_zomato.json", function(json) {
-            $.each(json.restaurants, function() {
-                let categories = this.restaurant.cuisines.split(", ");
-                let price = this.restaurant.average_cost_for_two;
-                match = categories.find(function(category) {
-                    return category == chosen_category;
-                });
-                // Check if the restaurant satisfies the filter
-                if (match && price <= chosen_price) {
-                    self.restaurant_list.push(new Restaurant(this.restaurant));
-                }
+        for (let i = 0; i < restaurant_count; i++) {
+            let restaurant_json = JSON.parse(JSON.parse(localStorage.getItem(i)));
+            let categories = restaurant_json.categories;
+            let average_cost_for_two = restaurant_json.average_cost_for_two;
+            match = categories.find(function(category) {
+                console.log(`${category} == ${chosen_category}`);
+                return category == chosen_category;
             });
+            // Check if the restaurant satisfies the filter
+            if (match && average_cost_for_two <= chosen_cost) {
+                let restaurant = new Restaurant();
+                restaurant.create_from_search(restaurant_json)
+                self.restaurant_list.push(restaurant);
+            }
+        }
 
-            // Hide all markers first then show only the 
-            // markers of the filtered restaurants
-            hide_markers();
-            show_markers(self.restaurant_list());
-        }).fail(function(error) {
-            console.log(error.responseText);
-            alert("An error has been encountered. Please consult with your system administrator.");
-        });
+        // Hide all markers first then show only the 
+        // markers of the filtered restaurants
+        hide_markers();
+        show_markers(self.restaurant_list());
     });
 
     // Provides a way for the user to "reset" and 
     // show all the restaurants and markers.
     $("#show-all").on("click", function() {
-        self.restaurant_list.removeAll();
-        $.getJSON("restaurants_zomato.json", function(json) { // TODO :: add fail function
-            $.each(json.restaurants, function() {
-                self.restaurant_list.push(new Restaurant(this.restaurant));
-            });
-        });
+        populate_restaurant_list_from_localstorage(self);
+        map.fitBounds(bounds);
         show_all_markers();
     });
-
-    // Put all the markers in place when the page loads.
-    if (!markers) {
-        init_markers(this.restaurant_list);
-    }
 
     // Setting the current restaurant will be triggered when the user clicks
     // on a restaurant on the list
@@ -127,13 +128,56 @@ let ViewModel = function() {
         if (marker) {
             // When the user clicks a restaurant the markers linked to it should bounce.
             toggle_bounce(marker);
+            console.log(marker);
+            map.panTo(marker.position);
+            map.setZoom(17);
             // It also should pop out the info window.
             populate_infowindow(marker, this);
         }
     }
 }
 
-// This function finds the marker related to the provided restaurant
+// Initialise map
+function init_map() {
+    map = new google.maps.Map($('#map').get(0), {
+        center: { lat: 14.5408671, lng: 121.0503183 },
+        zoom: 15,
+    });
+    bounds = new google.maps.LatLngBounds();
+    infowindow = new google.maps.InfoWindow();
+
+    // Create the autocomplete object and associate it with the UI input control.
+    autocomplete = new google.maps.places.Autocomplete(
+        ($("#city_autocomplete").get(0)), {
+            types: ['(cities)'],
+            componentRestrictions: { 'country': [] }
+        }
+    );
+
+    // When the user selects a city zoom the map in on that city.
+    autocomplete.addListener('place_changed', on_place_changed);
+
+    // Set the country restriction depending on the country that
+    // the user picked in the country list
+    $("#country-list").change(function() {
+        autocomplete.setComponentRestrictions(get_country());
+    });
+
+    // Search the place manually when the user presses enter
+    $("#city_autocomplete").keydown(function() {
+        if (event.which == 13) {
+            on_place_entered();
+        }
+    });
+
+    if (!view_model.restaurant_list().length == 0) {
+        bounds = init_markers(view_model.restaurant_list(), bounds);
+        // Make sure that all markers are visible in the map
+        map.fitBounds(bounds);
+        map.setZoom(17);
+    }
+}
+
 function find_marker(rst) {
     let rst_lat = rst.lat();
     let rst_lng = rst.lng();
@@ -151,47 +195,11 @@ function find_marker(rst) {
     return null;
 }
 
-// Initialise map
-function init_map() {
-    map = new google.maps.Map($('#map').get(0), {
-        center: { lat: 14.5408671, lng: 121.0503183 },
-        zoom: 15,
-    });
-    let bounds = new google.maps.LatLngBounds();
-    infowindow = new google.maps.InfoWindow();
-
-    autocomplete = new google.maps.places.Autocomplete(
-        ($("#city_autocomplete").get(0)), {
-            types: ['(cities)'],
-            componentRestrictions: { 'country': [] }
-        }
-    );
-
-    autocomplete.addListener('place_changed', on_place_changed);
-
-    $("#country-list").change(function() {
-        autocomplete.setComponentRestrictions(get_country);
-    });
-
-    $("#city_autocomplete").keydown(function() {
-        if (event.which == 13) {
-            on_place_entered();
-        }
-    });
-
-    if (!view_model.restaurant_list().length == 0) {
-        bounds = init_markers(view_model.restaurant_list(), bounds);
-        // Make sure that all markers are visible in the map
-        map.fitBounds(bounds);
-        map.setZoom(16);
-    }
-}
-
 function on_place_changed() {
     let place = autocomplete.getPlace();
     if (place.geometry) {
-        map.panTo(place.geometry.location);
-        map.setZoom(15);
+        let location = place.geometry.location;
+        create_restaurant_list_and_markers(location.lat(), location.lng());
     } else {
         $("#city_autocomplete").val('');
     }
@@ -200,8 +208,8 @@ function on_place_changed() {
 function on_place_entered() {
     let geocoder = new google.maps.Geocoder();
     let country = $("#country-list").val();
-
     let city = $("#city_autocomplete").val();
+
     if (!city) {
         alert("Please enter a valid city.");
     } else {
@@ -212,12 +220,78 @@ function on_place_entered() {
             function(results, status) {
                 if (status == google.maps.GeocoderStatus.OK) {
                     let location = results[0].geometry.location;
-                    map.panTo(location);
-                    map.setZoom(15);
+                    create_restaurant_list_and_markers(location.lat(), location.lng());
                 } else {
                     alert("We could not find the specified location. Please enter a valid city.");
                 }
             });
+    }
+}
+
+function create_restaurant_list_and_markers(lat, lng) {
+    $.ajax({
+        type: 'GET',
+        dataType: "json",
+        url: `https://developers.zomato.com/api/v2.1/search?lat=${lat}&lon=${lng}&radius=2000&category=8%2C9%2C10&sort=real_distance&order=desc`,
+        headers: { "user-key": ZOMATO_KEY },
+    }).done(function(result) {
+        clear_markers();
+        view_model.restaurant_list.removeAll();
+        view_model.category_list.removeAll();
+        bounds = new google.maps.LatLngBounds();
+
+        populate_restaurant_list_from_json(result.restaurants, view_model);
+        populate_category_list(view_model);
+
+        if (!view_model.restaurant_list().length == 0) {
+            bounds = init_markers(view_model.restaurant_list(), bounds);
+            // Make sure that all markers are visible in the map
+            map.fitBounds(bounds);
+        }
+    }).fail(function(error) {
+        console.log(error.responseJSON);
+        alert("An error has been encountered. Please consult with your system administrator.");
+    });
+}
+
+// Populate category list by fetching all the cuisines in all the restaurants
+function populate_category_list(view_model) {
+    $.each(view_model.restaurant_list(), function() {
+        $.each(this.categories(), function() {
+            let category = String(this);
+            // Make sure that all the categories saved do not have duplicates
+            let match = ko.utils.arrayFirst(view_model.category_list(), function(item) {
+                return category === item;
+            });
+            if (!match) {
+                view_model.category_list.push(category);
+            }
+        });
+    });
+}
+
+function populate_restaurant_list_from_json(restaurants, view_model) {
+    let count = 0;
+
+    $.each(restaurants, function() {
+        let restaurant = new Restaurant();
+        restaurant.create_from_json(this.restaurant)
+        view_model.restaurant_list.push(restaurant);
+        restaurant = view_model.restaurant_list()[count];
+        localStorage.setItem(count, JSON.stringify(ko.toJSON(restaurant)));
+        count++;
+    });
+}
+
+function populate_restaurant_list_from_localstorage(view_model) {
+    let restaurant_count = localStorage.length;
+    view_model.restaurant_list.removeAll();
+
+    for (let i = 0; i < restaurant_count; i++) {
+        let restaurant_json = JSON.parse(JSON.parse(localStorage.getItem(i)));
+        let restaurant = new Restaurant();
+        restaurant.create_from_search(restaurant_json)
+        view_model.restaurant_list.push(restaurant);
     }
 }
 
@@ -247,6 +321,8 @@ function init_markers(restaurant_list, bounds) {
         });
         let copy_marker;
         marker.addListener('click', function() {
+            map.panTo(location);
+            map.setZoom(17);
             toggle_bounce(marker);
             populate_infowindow(marker, self);
         });
@@ -282,7 +358,7 @@ function populate_infowindow(marker, restaurant) {
             type: 'GET',
             dataType: "json",
             // TODO - Make a way for the user to insert their own API KEY
-            headers: { "user-key": "000e28228e4fb09d7e02710d59331fbe" },
+            headers: { "user-key": ZOMATO_KEY },
             url: details_url
         }).done(function(result) {
             restaurant_html = `
@@ -317,6 +393,11 @@ function init_map_with_delay() {
     window.setTimeout(init_map, 1000);
 }
 
+function clear_markers() {
+    hide_markers();
+    markers = [];
+}
+
 function hide_markers() {
     $.each(markers, function() {
         this.setMap(null);
@@ -345,7 +426,7 @@ function show_all_markers() {
 $("header img").click(function() {
     $("aside").toggleClass('slide');
     $(".control-container ").toggleClass('hide');
-    $("#price-slider").toggleClass('hide');
+    $("#cost-slider").toggleClass('hide');
     $("#custom-handle").toggleClass('hide');
     $("#map").width()
     if (!toggled) {
@@ -363,7 +444,7 @@ $(window).resize(function() {
     if ($(window).width() <= 950) {
         $("aside").addClass('slide');
         $(".control-container ").addClass('hide');
-        $("#price-slider").addClass('hide');
+        $("#cost-slider").addClass('hide');
         $("#custom-handle").addClass('hide');
         $("#map").width("100%");
         toggled = true;
@@ -376,7 +457,7 @@ $(window).ready(function() {
     if ($(window).width() <= 950) {
         $("aside").addClass('slide');
         $(".control-container ").addClass('hide');
-        $("#price-slider").addClass('hide');
+        $("#cost-slider").addClass('hide');
         $("#custom-handle").addClass('hide');
         $("#map").width("100%");
         toggled = true;
@@ -385,10 +466,10 @@ $(window).ready(function() {
 
 // Jquery UI Slider
 let handle = $("#custom-handle");
-$("#price-slider").slider({
-    value: 3000,
+$("#cost-slider").slider({
+    value: 5000,
     min: 500,
-    max: 3000,
+    max: 5000,
     step: 50,
     create: function() {
         handle.text('₱' + $(this).slider("value"));
