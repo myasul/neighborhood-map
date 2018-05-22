@@ -3,7 +3,6 @@ let infowindow;
 let markers = [];
 let autocomplete;
 let bounds;
-let toggled = false;
 const ZOMATO_KEY = '000e28228e4fb09d7e02710d59331fbe';
 
 // Restaurant Model
@@ -45,13 +44,9 @@ let Country = function(data) {
 
 let ViewModel = function() {
     let self = this;
-    // Restaurant list. Choices provided to the user that will be displayed in the side bar.
     this.restaurant_list = ko.observableArray();
-    // List of categories. This will be used as filter.
     this.category_list = ko.observableArray();
-    // List of countries.
     this.country_list = ko.observableArray();
-    // The restaurant that is selected by the user.
     this.current_restaurant = ko.observable();
 
     // Currently, the list of restaurants is saved in retaurants_zomato.json
@@ -90,7 +85,6 @@ let ViewModel = function() {
             let categories = restaurant_json.categories;
             let average_cost_for_two = restaurant_json.average_cost_for_two;
             match = categories.find(function(category) {
-                console.log(`${category} == ${chosen_category}`);
                 return category == chosen_category;
             });
             // Check if the restaurant satisfies the filter
@@ -110,6 +104,9 @@ let ViewModel = function() {
     // Provides a way for the user to "reset" and 
     // show all the restaurants and markers.
     $("#show-all").on("click", function() {
+        // clear lists first before populating them.
+        view_model.restaurant_list.removeAll();
+
         populate_restaurant_list_from_localstorage(self);
         map.fitBounds(bounds);
         show_all_markers();
@@ -128,17 +125,17 @@ let ViewModel = function() {
         if (marker) {
             // When the user clicks a restaurant the markers linked to it should bounce.
             toggle_bounce(marker);
-            console.log(marker);
             map.panTo(marker.position);
             map.setZoom(17);
             // It also should pop out the info window.
             populate_infowindow(marker, this);
         }
     }
+    init_map(self);
 }
 
 // Initialise map
-function init_map() {
+function init_map(view_model) {
     map = new google.maps.Map($('#map').get(0), {
         center: { lat: 14.5408671, lng: 121.0503183 },
         zoom: 15,
@@ -154,7 +151,8 @@ function init_map() {
         }
     );
 
-    // When the user selects a city zoom the map in on that city.
+    // When the user selects a city suggested by Google's autocomplete feature,
+    // Use that to search restaurants and zoom the map in on that city.
     autocomplete.addListener('place_changed', on_place_changed);
 
     // Set the country restriction depending on the country that
@@ -178,14 +176,15 @@ function init_map() {
     }
 }
 
+
+// The function will find the restaurant's marker by looking in 
+// the each markers coordinates and comparing it with
+// the coordinates of the provided restaurant.
 function find_marker(rst) {
     let rst_lat = rst.lat();
     let rst_lng = rst.lng();
     let marker;
     for (let i = 0; i < markers.length; i++) {
-        // The function will find the restaurant's marker by looking in 
-        // the each markers coordinates and comparing it with
-        // the coordinates of the provided restaurant.
         let marker_lat = markers[i].getPosition().lat().toFixed(10);
         let marker_lng = markers[i].getPosition().lng().toFixed(10);
         if ((rst_lat == marker_lat) && (rst_lng == marker_lng)) {
@@ -228,6 +227,8 @@ function on_place_entered() {
     }
 }
 
+// To create the restaurant list, pass the coordinates of the city 
+// the user chose and use it to request the restaurant list from zomato.
 function create_restaurant_list_and_markers(lat, lng) {
     $.ajax({
         type: 'GET',
@@ -236,6 +237,7 @@ function create_restaurant_list_and_markers(lat, lng) {
         headers: { "user-key": ZOMATO_KEY },
     }).done(function(result) {
         clear_markers();
+        // clear lists first before populating them.
         view_model.restaurant_list.removeAll();
         view_model.category_list.removeAll();
         bounds = new google.maps.LatLngBounds();
@@ -299,7 +301,9 @@ function get_country() {
     let empty_array = [];
     let country = $("#country-list").val();
     if (country == 'AA') {
-        return {};
+        return {
+            'country': []
+        };
     } else {
         return { 'country': country };
     }
@@ -387,12 +391,6 @@ function populate_infowindow(marker, restaurant) {
     }
 }
 
-// Added 1 second delay to the initialization of the map
-// to make sure that the restaurant list is loaded.
-function init_map_with_delay() {
-    window.setTimeout(init_map, 1000);
-}
-
 function clear_markers() {
     hide_markers();
     markers = [];
@@ -421,63 +419,6 @@ function show_all_markers() {
         this.setAnimation(google.maps.Animation.DROP);
     });
 }
-
-// Burger icon that will toggle to display the restaurant list
-$("header img").click(function() {
-    $("aside").toggleClass('slide');
-    $(".control-container ").toggleClass('hide');
-    $("#cost-slider").toggleClass('hide');
-    $("#custom-handle").toggleClass('hide');
-    $("#map").width()
-    if (!toggled) {
-        $("#map").width("100%");
-        toggled = true;
-    } else {
-        $("#map").css('width', 'calc(100% - 330px)');
-        toggled = false;
-    }
-
-});
-
-// Hide the restaurant list if the screen of the user is less
-$(window).resize(function() {
-    if ($(window).width() <= 950) {
-        $("aside").addClass('slide');
-        $(".control-container ").addClass('hide');
-        $("#cost-slider").addClass('hide');
-        $("#custom-handle").addClass('hide');
-        $("#map").width("100%");
-        toggled = true;
-    }
-})
-
-// Hide the restaurant list if the screen of the user is less
-// than 950 pixels (applies to tablets and mobile phones)
-$(window).ready(function() {
-    if ($(window).width() <= 950) {
-        $("aside").addClass('slide');
-        $(".control-container ").addClass('hide');
-        $("#cost-slider").addClass('hide');
-        $("#custom-handle").addClass('hide');
-        $("#map").width("100%");
-        toggled = true;
-    }
-});
-
-// Jquery UI Slider
-let handle = $("#custom-handle");
-$("#cost-slider").slider({
-    value: 5000,
-    min: 500,
-    max: 5000,
-    step: 50,
-    create: function() {
-        handle.text('₱' + $(this).slider("value"));
-    },
-    slide: function(event, ui) {
-        handle.text(`₱ ${ui.value}`);
-    }
-});
 
 let view_model = new ViewModel();
 ko.applyBindings(view_model);

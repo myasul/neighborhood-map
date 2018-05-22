@@ -15,32 +15,61 @@
     </header>
     <main>
         <aside>
-            <div class="location-container">
-                <p>Find Restaurants in:</p>
-                <label class="country-label" for="country-list">Country:</label>
-                <select id="country-list" data-bind="options: country_list, 
+            <section class="location-container">
+                <div class="toggle toggle-flex" id="location-toggle">
+                    <p>LOCATION</p>
+                    <svg class="arrow-down" width="50" height="50" xmlns="http://www.w3.org/2000/svg">
+                        <g>
+                            <polygon class="arrow-down" stroke="null" fill="#999" points="31.48526382446289,21.72698402404785 30.877254486083984,21.049787521362305 25.000001907348633,27.595815658569336 19.122745513916016,21.049787521362305 18.514734268188477,21.72698402404785 25.000001907348633,28.950212478637695 "/>
+                        </g>
+                    </svg>
+                </div>
+                <div class="item-container open" id="location">
+                    <p>Find Restaurants in:</p>
+                    <label for="country-list">Country:</label>
+                    <select id="country-list" data-bind="options: country_list, 
                                                     optionsText: 'name',
                                                     optionsValue: 'code'" ,></select>
-                <br><br>
-                <label for="city_autocomplete">City: </label>
-                <input type="text" id="city_autocomplete">
-
-            </div>
-            <div class="control-container">
-                <label for="category-list">Category:</label>
-                <select id="category-list" data-bind="options: category_list"></select>
-                <label for="cost-slider">Average Cost for Two:</label>
-                <div id="cost-slider">
-                    <div id="custom-handle" class="ui-slider-handle"></div>
+                    <br><br>
+                    <label for="city_autocomplete">City: </label>
+                    <input type="text" id="city_autocomplete">
                 </div>
-                <a id="search" href="#">Search</a>
-                <a id="show-all" href="#">Show All</a>
-            </div>
-            <div class="restaurant-list-container">
-                <ul class="restaurant-list" data-bind="foreach: restaurant_list">
-                    <li data-bind="text: name, click: $parent.set_current_restaurant, css: {selected: selected() == true}"></li>
-                </ul>
-            </div>
+            </section>
+            <section class="filter-container">
+                <div class="toggle toggle-flex" id="filter-toggle">
+                    <p>FILTERS</p>
+                    <svg class="arrow-down" width="50" height="50" xmlns="http://www.w3.org/2000/svg">
+                        <g>
+                            <polygon class="arrow-down" stroke="null" fill="#999" points="31.48526382446289,21.72698402404785 30.877254486083984,21.049787521362305 25.000001907348633,27.595815658569336 19.122745513916016,21.049787521362305 18.514734268188477,21.72698402404785 25.000001907348633,28.950212478637695 "/>
+                        </g>
+                    </svg>
+                </div>
+                <div class="item-container open" id="filter">
+                    <label for="category-list">Category:</label>
+                    <select id="category-list" data-bind="options: category_list"></select>
+                    <label for="cost-slider">Average Cost for Two:</label>
+                    <div id="cost-slider">
+                        <div id="custom-handle" class="ui-slider-handle"></div>
+                    </div>
+                    <a id="search" href="#">Search</a>
+                    <a id="show-all" href="#">Show All</a>
+                </div>
+            </section>
+            <section class="restaurant-container">
+                <div class="toggle toggle-flex" id="restaurant-toggle">
+                    <p class="restaurant-header-toggle">RESTAURANTS</p>
+                    <svg width="50" height="50" xmlns="http://www.w3.org/2000/svg">
+                        <g>
+                            <polygon class="arrow-down" stroke="null" fill="#999" points="31.48526382446289,21.72698402404785 30.877254486083984,21.049787521362305 25.000001907348633,27.595815658569336 19.122745513916016,21.049787521362305 18.514734268188477,21.72698402404785 25.000001907348633,28.950212478637695 "/>
+                        </g>
+                    </svg>
+                </div>
+                <div class="open" id="restaurant">
+                    <ul class="restaurant-list" data-bind="foreach: restaurant_list">
+                        <li data-bind="text: name, click: $parent.set_current_restaurant, css: {selected: selected() == true}"></li>
+                    </ul>
+                </div>
+            </section>
         </aside>
         <section id="map"></section>
     </main>
@@ -48,8 +77,10 @@
     <script defer src="js/jquery-ui.min.js"></script>
     <script defer src="js/jquery.ui.touch-punch.min.js"></script>
     <script defer src="js/knockout.js"></script>
+    <script defer src="https://maps.googleapis.com/maps/api/js?libraries=places,geometry&key=AIzaSyD8-Remi8efHedF6YYqHpeLb4NvrGpBxd4"></script>
     <script defer src="js/app.js"></script>
-    <script defer src="https://maps.googleapis.com/maps/api/js?libraries=places,geometry&key=AIzaSyD8-Remi8efHedF6YYqHpeLb4NvrGpBxd4&callback=init_map_with_delay"></script>
+    <script defer src="js/layout.js"></script>
+
 </body>
 
 </html>
