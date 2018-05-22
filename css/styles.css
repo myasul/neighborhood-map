@@ -155,7 +155,6 @@ select,
 }
 
 #restaurant {
-    height: calc(34vh - 40px);
     overflow-y: auto;
 }
 
