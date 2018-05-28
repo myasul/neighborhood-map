@@ -13,10 +13,10 @@
         <img src="img/burger.svg">
         <h1>Restaurant Finder</h1>
     </header>
-    <main>
+    <main class="flex">
         <aside>
             <section class="location-container">
-                <div class="toggle toggle-flex" id="location-toggle">
+                <div class="toggle flex" id="location-toggle">
                     <p>LOCATION</p>
                     <svg class="arrow-down" width="50" height="50" xmlns="http://www.w3.org/2000/svg">
                         <g>
@@ -25,7 +25,6 @@
                     </svg>
                 </div>
                 <div class="item-container open" id="location">
-                    <p>Find Restaurants in:</p>
                     <label for="country-list">Country:</label>
                     <select id="country-list" data-bind="options: country_list, 
                                                     optionsText: 'name',
@@ -36,7 +35,7 @@
                 </div>
             </section>
             <section class="filter-container">
-                <div class="toggle toggle-flex" id="filter-toggle">
+                <div class="toggle flex" id="filter-toggle">
                     <p>FILTERS</p>
                     <svg class="arrow-down" width="50" height="50" xmlns="http://www.w3.org/2000/svg">
                         <g>
@@ -51,12 +50,16 @@
                     <div id="cost-slider">
                         <div id="custom-handle" class="ui-slider-handle"></div>
                     </div>
-                    <a id="search" href="#">Search</a>
-                    <a id="show-all" href="#">Show All</a>
+                    <div class="filter-buttons flex">
+                        <a id="search" href="#">Search</a>
+                        <a id="show-all" href="#">Show All</a>
+                        <a id="prev" class="arrow-button flex" href="#"><img src="img/left-arrow.svg"></a>
+                        <a id="next" class="arrow-button flex" href="#"><img src="img/right-arrow.svg"></a>
+                    </div>
                 </div>
             </section>
             <section class="restaurant-container">
-                <div class="toggle toggle-flex" id="restaurant-toggle">
+                <div class="toggle flex" id="restaurant-toggle">
                     <p class="restaurant-header-toggle">RESTAURANTS</p>
                     <svg width="50" height="50" xmlns="http://www.w3.org/2000/svg">
                         <g>

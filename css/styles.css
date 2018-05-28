@@ -8,6 +8,11 @@ body {
     font-family: 'Open Sans', sans-serif;
 }
 
+.flex {
+    display: flex !important;
+    flex-wrap: wrap;
+}
+
 header {
     display: flex;
     background-color: #1D272F;
@@ -32,11 +37,6 @@ header h1 {
     color: white;
 }
 
-main {
-    display: flex;
-    flex-wrap: wrap;
-}
-
 aside {
     background-color: #2F3D48;
     width: 330px;
@@ -44,6 +44,7 @@ aside {
 }
 
 .toggle {
+    justify-content: space-between;
     background-color: #26323C;
     height: 40px;
     color: #999;
@@ -68,15 +69,9 @@ svg {
     margin: 1.5em;
 }
 
-.toggle-flex {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-}
-
 .location-container {
     color: white;
-    height: calc(28vh - 1px);
+    height: calc(23vh - 1px);
     transition: 0.5s height ease;
 }
 
@@ -132,15 +127,29 @@ select,
 }
 
 .filter-container a {
+    height: 19px;
     font-size: 1em;
     border: 1px solid #999;
     background-color: white;
     color: black;
     display: inline-block;
-    padding: 5px 10px;
+    padding: 8px 10px;
     border-radius: 5px;
     text-decoration: none;
     margin-top: 18px;
+}
+
+.filter-buttons {
+    flex-direction: row;
+    justify-content: space-between;
+    width: 250px;
+}
+
+.arrow-button {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    width: 20px;
 }
 
 #category-list,
@@ -150,7 +159,7 @@ select,
 }
 
 .restaurant-container {
-    height: 34vh;
+    height: 38vh;
     transition: 0.5s height ease;
 }
 
@@ -217,31 +226,51 @@ li:focus {
 }
 
 @media screen and (min-height:710px) {
+    select {
+        background-color: rgb(248, 248, 248);
+        border-width: 1px;
+        border-style: solid;
+        border-color: rgb(166, 166, 166);
+        border-image: initial;
+    }
     header {
         height: 4.5vh;
     }
-    .control-container {
-        height: calc(18vh - 1px);
+    .location-container {
+        height: calc(15vh - 1px);
+    }
+    .filter-container {
+        height: calc(21vh - 1px);
     }
     #map {
         height: 95.5vh;
     }
-    .restaurant-list-container {
-        height: 77.5vh;
+    .restaurant-container {
+        height: 58vh;
     }
 }
 
 @media screen and (max-height: 670px) {
+    select {
+        background-color: rgb(248, 248, 248);
+        border-width: 1px;
+        border-style: solid;
+        border-color: rgb(166, 166, 166);
+        border-image: initial;
+    }
     header {
         height: 7vh;
     }
     body {
         font-size: 12px;
     }
-    .control-container {
-        height: calc(28vh - 1px);
+    .location-container {
+        height: calc(25vh - 1px);
     }
-    .restaurant-list-container {
-        height: 65vh;
+    .filter-container {
+        height: calc(35vh - 1px);
+    }
+    .restaurant-container {
+        height: 32vh;
     }
 }
