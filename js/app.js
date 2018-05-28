@@ -75,25 +75,25 @@ let ViewModel = function() {
     $("#search").on("click", function() {
         let chosen_category = $("#category-list").val();
         let chosen_cost = $('#cost-slider').slider("option", "value");
-        let restaurant_count = localStorage.length;
+
         // Remove all the current restaurants so that we could populate it
         // with the restaurants that satisfy the filters specified by the user
         self.restaurant_list.removeAll();
+        let restaurants = ko.utils.parseJson(localStorage.getItem("restaurants"));
 
-        for (let i = 0; i < restaurant_count; i++) {
-            let restaurant_json = JSON.parse(JSON.parse(localStorage.getItem(i)));
-            let categories = restaurant_json.categories;
-            let average_cost_for_two = restaurant_json.average_cost_for_two;
+        $.each(restaurants, function() {
+            let average_cost_for_two = this.average_cost_for_two;
+            let categories = this.categories;
+
             match = categories.find(function(category) {
                 return category == chosen_category;
             });
-            // Check if the restaurant satisfies the filter
             if (match && average_cost_for_two <= chosen_cost) {
                 let restaurant = new Restaurant();
-                restaurant.create_from_search(restaurant_json)
+                restaurant.create_from_search(this)
                 self.restaurant_list.push(restaurant);
             }
-        }
+        });
 
         // Hide all markers first then show only the 
         // markers of the filtered restaurants
@@ -273,28 +273,28 @@ function populate_category_list(view_model) {
 }
 
 function populate_restaurant_list_from_json(restaurants, view_model) {
+    let restaurant_array = []
     let count = 0;
 
     $.each(restaurants, function() {
         let restaurant = new Restaurant();
-        restaurant.create_from_json(this.restaurant)
+        restaurant.create_from_json(this.restaurant);
         view_model.restaurant_list.push(restaurant);
-        restaurant = view_model.restaurant_list()[count];
-        localStorage.setItem(count, JSON.stringify(ko.toJSON(restaurant)));
+        restaurant_array.push(view_model.restaurant_list()[count]);
         count++;
     });
+    localStorage.setItem("restaurants", ko.toJSON(restaurant_array));
 }
 
 function populate_restaurant_list_from_localstorage(view_model) {
-    let restaurant_count = localStorage.length;
     view_model.restaurant_list.removeAll();
+    let restaurants = ko.utils.parseJson(localStorage.getItem("restaurants"));
 
-    for (let i = 0; i < restaurant_count; i++) {
-        let restaurant_json = JSON.parse(JSON.parse(localStorage.getItem(i)));
+    $.each(restaurants, function() {
         let restaurant = new Restaurant();
-        restaurant.create_from_search(restaurant_json)
+        restaurant.create_from_search(this);
         view_model.restaurant_list.push(restaurant);
-    }
+    });
 }
 
 function get_country() {
