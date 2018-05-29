@@ -5,7 +5,6 @@ let autocomplete;
 let bounds;
 const ZOMATO_KEY = '000e28228e4fb09d7e02710d59331fbe';
 const DFLT_LOCATION = { lat: '14.5408671', lng: '121.0503183' };
-const CURRLAYER_KEY = '838dedd3c45fbe4a4903ece2a8611164';
 
 // Restaurant Model
 let Restaurant = function() {
@@ -115,7 +114,7 @@ let ViewModel = function() {
 /* INITIALIZE MAP */
 function init_map(view_model) {
     map = new google.maps.Map($('#map').get(0), {
-        center: { lat: 14.5408671, lng: 121.0503183 },
+        center: { lat: DFLT_LOCATION.lat, lng: DFLT_LOCATION.lng },
         zoom: 15,
     });
     bounds = new google.maps.LatLngBounds();
