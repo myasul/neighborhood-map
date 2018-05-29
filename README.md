@@ -48,3 +48,5 @@ __Features__
   - Rating.
   - Full Address.
 - The website is fully responsive and can be viewed in tablets and mobile phones.
+
+ENJOY USING THE RESTAURANT FINDER! :smile::blush::grin:
