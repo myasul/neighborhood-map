@@ -12,17 +12,17 @@
     let restaurant;
 
     // Burger icon that will toggle to display the side bar
-    $("header img").click(function() {
-        $("aside").toggleClass('slide');
-        $(".filter-container").toggleClass('hide');
-        $(".location-container").toggleClass('hide');
-        $("#cost-slider").toggleClass('hide');
-        $("#custom-handle").toggleClass('hide');
+    $('header img').click(function() {
+        $('aside').toggleClass('slide');
+        $('.filter-container').toggleClass('hide');
+        $('.location-container').toggleClass('hide');
+        $('#cost-slider').toggleClass('hide');
+        $('#custom-handle').toggleClass('hide');
         if (!toggled) {
-            $("#map").width("100%");
+            $('#map').width('100%');
             toggled = true;
         } else {
-            $("#map").css('width', 'calc(100% - 330px)');
+            $('#map').css('width', 'calc(100% - 330px)');
             toggled = false;
         }
 
@@ -31,12 +31,12 @@
     // Hide the side bar if the screen of the user is less than 950px
     $(window).resize(function() {
         if ($(window).width() <= 950) {
-            $("aside").addClass('slide');
-            $(".filter-container").addClass('hide');
-            $(".location-container").addClass('hide');
-            $("#cost-slider").addClass('hide');
-            $("#custom-handle").addClass('hide');
-            $("#map").width("100%");
+            $('aside').addClass('slide');
+            $('.filter-container').addClass('hide');
+            $('.location-container').addClass('hide');
+            $('#cost-slider').addClass('hide');
+            $('#custom-handle').addClass('hide');
+            $('#map').width('100%');
             toggled = true;
         }
     })
@@ -46,43 +46,43 @@
         // Collect all the height measurements once the page is ready.
         // Height measurements will be used for slide up/down feature of
         // side section.
-        location = $("#location").height();
-        location_container_open = $(".location-container").height();
-        location_container_close = $(".location-container").height() - location;
+        location = $('#location').height();
+        location_container_open = $('.location-container').height();
+        location_container_close = $('.location-container').height() - location;
 
-        filter = $("#filter").height();
-        filter_container_open = $(".filter-container").height();
-        filter_container_close = $(".filter-container").height() - filter;
+        filter = $('#filter').height();
+        filter_container_open = $('.filter-container').height();
+        filter_container_close = $('.filter-container').height() - filter;
 
-        restaurant = $("#restaurant").height();
-        restaurant_container_open = $(".restaurant-container").height();
-        restaurant_container_close = $(".restaurant-container").height() - restaurant;
+        restaurant = $('#restaurant').height();
+        restaurant_container_open = $('.restaurant-container').height();
+        restaurant_container_close = $('.restaurant-container').height() - restaurant;
 
         // Hide the restaurant list if the screen of the user is less
         // than 950 pixels (applies to tablets and mobile phones)
         if ($(window).width() <= 950) {
-            $("aside").addClass('slide');
-            $(".filter-container ").addClass('hide');
-            $(".location-container").toggleClass('hide');
-            $("#cost-slider").addClass('hide');
-            $("#custom-handle").addClass('hide');
-            $("#map").width("100%");
+            $('aside').addClass('slide');
+            $('.filter-container ').addClass('hide');
+            $('.location-container').toggleClass('hide');
+            $('#cost-slider').addClass('hide');
+            $('#custom-handle').addClass('hide');
+            $('#map').width('100%');
             toggled = true;
         }
     });
 
 
-    $("#location-toggle").click(function() {
+    $('#location-toggle').click(function() {
         slide('location');
         resize_restaurant_section();
     });
 
-    $("#filter-toggle").click(function() {
+    $('#filter-toggle').click(function() {
         slide('filter');
         resize_restaurant_section();
     });
 
-    $("#restaurant-toggle").click(function() {
+    $('#restaurant-toggle').click(function() {
         slide('restaurant');
         resize_restaurant_section();
     });
@@ -93,21 +93,21 @@
         let container_close = eval(`${section}_container_close`);
         let container_open = eval(`${section}_container_open`);
         $(`#${section}`).slideToggle();
-        if ($(`#${section}`).hasClass("open")) {
+        if ($(`#${section}`).hasClass('open')) {
             $(`.${section}-container`).css('height', `calc( ${container_close}px)`);
         } else {
             $(`.${section}-container`).css('height', `calc( ${container_open}px)`);
         }
-        $(`#${section}`).toggleClass("open");
+        $(`#${section}`).toggleClass('open');
     }
 
     // The restaurant list should always fill up the space of the 
     // side bar. Space to be filled up would be different depending
     // on the number of sections opened.
     function resize_restaurant_section() {
-        let location_is_hidden = !$("#location").hasClass("open");
-        let filter_is_hidden = !$("#filter").hasClass("open");
-        let restaurant = $(".restaurant-container");
+        let location_is_hidden = !$('#location').hasClass('open');
+        let filter_is_hidden = !$('#filter').hasClass('open');
+        let restaurant = $('.restaurant-container');
         let rheight = restaurant_container_open;
 
         if (location_is_hidden && filter_is_hidden) {
@@ -122,36 +122,36 @@
     }
 
     // Animate the arrow head when 
-    $(".toggle").click(function() {
-        let elem = $("svg", this);
+    $('.toggle').click(function() {
+        let elem = $('svg', this);
         let degree_from;
         let degree_to;
 
-        if ($(this).next(".open").length) {
-            degree_from = "180"
-            degree_to = "360";
+        if ($(this).next('.open').length) {
+            degree_from = '180'
+            degree_to = '360';
         } else {
-            degree_from = "0"
-            degree_to = "180";
+            degree_from = '0'
+            degree_to = '180';
         }
 
         $({ deg: degree_from }).animate({ deg: degree_to }, {
             step: function(now, fx) {
-                $(elem).css({ "transform": `rotate(${now}deg)` });
+                $(elem).css({ 'transform': `rotate(${now}deg)` });
             }
         });
 
     })
 
     // Jquery UI Slider
-    let handle = $("#custom-handle");
-    $("#cost-slider").slider({
+    let handle = $('#custom-handle');
+    $('#cost-slider').slider({
         value: 5000,
         min: 500,
         max: 5000,
         step: 50,
         create: function() {
-            handle.text('₱' + $(this).slider("value"));
+            handle.text('₱' + $(this).slider('value'));
         },
         slide: function(event, ui) {
             handle.text(`₱ ${ui.value}`);

@@ -29,7 +29,7 @@ let Restaurant = function() {
         this.location.set_location(data.location.latitude, data.location.longitude);
         this.name(data.name);
         this.selected(false);
-        this.categories(data.cuisines.split(", "));
+        this.categories(data.cuisines.split(', '));
         this.average_cost_for_two(data.average_cost_for_two);
     }
 }
@@ -64,7 +64,7 @@ let ViewModel = function() {
     // Currently, the list of restaurants is saved in retaurants_zomato.json
     // I used Zomato /search API to fetch the list of restaurants within the vicinity of Taguig.
     if (localStorage.length == 0 || get_restaurants().length == 0) {
-        $.getJSON("restaurants_zomato.json", function(json) {
+        $.getJSON('restaurants_zomato.json', function(json) {
             set_result_query(20, -1);
             set_current_location(DFLT_LOCATION.lat, DFLT_LOCATION.lng);
             populate_restaurant_list_from_json(json.restaurants, self);
@@ -72,7 +72,7 @@ let ViewModel = function() {
             init_map(self);
         }).fail(function(error) {
             console.log(error.responseText);
-            alert("An error has been encountered. Please consult with your system administrator.");
+            alert('An error has been encountered. Please consult with your system administrator.');
         });;
     } else {
         populate_restaurant_list_from_localstorage(self);
@@ -81,7 +81,7 @@ let ViewModel = function() {
     }
 
     // Populate the country drop down.
-    $.getJSON("countries_zomato.json", function(json) {
+    $.getJSON('countries_zomato.json', function(json) {
         $.each(json, function() {
             self.country_list.push(new Country(this));
         });
@@ -114,7 +114,7 @@ let ViewModel = function() {
 /* INITIALIZE MAP */
 function init_map(view_model) {
     map = new google.maps.Map($('#map').get(0), {
-        center: { lat: DFLT_LOCATION.lat, lng: DFLT_LOCATION.lng },
+        center: { lat: parseFloat(DFLT_LOCATION.lat), lng: parseFloat(DFLT_LOCATION.lng) },
         zoom: 15,
     });
     bounds = new google.maps.LatLngBounds();
@@ -122,7 +122,7 @@ function init_map(view_model) {
 
     // Create the autocomplete object and associate it with the UI input control.
     autocomplete = new google.maps.places.Autocomplete(
-        ($("#city_autocomplete").get(0)), {
+        ($('#city_autocomplete').get(0)), {
             types: ['(cities)'],
             componentRestrictions: { country: 'PH' }
         }
@@ -134,12 +134,12 @@ function init_map(view_model) {
 
     // Set the country restriction depending on the country that
     // the user picked in the country list
-    $("#country-list").change(function() {
+    $('#country-list').change(function() {
         autocomplete.setComponentRestrictions(get_country());
     });
 
     // Search the place manually when the user presses enter
-    $("#city_autocomplete").keydown(function() {
+    $('#city_autocomplete').keydown(function() {
         if (event.which == 13) {
             on_place_entered();
         }
@@ -157,9 +157,9 @@ function init_map(view_model) {
 
 // Searches all the restaurants that matches
 // the cost and category the user has provided
-$("#search").on("click", function() {
-    let chosen_category = $("#category-list").val();
-    let chosen_cost = $('#cost-slider').slider("option", "value");
+$('#search').on('click', function() {
+    let chosen_category = $('#category-list').val();
+    let chosen_cost = $('#cost-slider').slider('option', 'value');
     let current_currency = view_model.current_country().currency();
     let rate;
 
@@ -172,7 +172,7 @@ $("#search").on("click", function() {
     if (current_currency != 'PHP') {
         $.ajax({
             type: 'GET',
-            dataType: "json",
+            dataType: 'json',
             async: false,
             url: `https://free.currencyconverterapi.com/api/v5/convert?q=PHP_${current_currency}&compact=ultra`
         }).done(function(result) {
@@ -202,9 +202,9 @@ $("#search").on("click", function() {
     show_markers(view_model.restaurant_list());
 });
 
-// Provides a way for the user to "reset" and 
+// Provides a way for the user to 'reset' and 
 // show all the restaurants and markers.
-$("#show-all").on("click", function() {
+$('#show-all').on('click', function() {
     // clear lists first before populating them.
     view_model.restaurant_list.removeAll();
 
@@ -216,8 +216,8 @@ $("#show-all").on("click", function() {
 // This will retrieve the next set of restaurants (max of 20 restaurants)
 // and this function would call a function that would create the list
 // and set of markers.
-$("#next").on("click", function() {
-    $("#prev").removeClass('disable-link');
+$('#next').on('click', function() {
+    $('#prev').removeClass('disable-link');
 
     let rq = get_result_query();
     let location = get_current_location();
@@ -236,8 +236,8 @@ $("#next").on("click", function() {
 // This will retrieve the previous set of restaurants (max of 20 restaurants)
 // and this function would call a function that would create the list
 // and set of markers.
-$("#prev").on("click", function() {
-    $("#next").removeClass('disable-link');
+$('#prev').on('click', function() {
+    $('#next').removeClass('disable-link');
     let rq = get_result_query();
     let location = get_current_location();
     let prev = parseInt(rq.prev);
@@ -245,7 +245,7 @@ $("#prev").on("click", function() {
 
     if (prev == 0) {
         set_result_query(next - 20, -1);
-        $("#prev").addClass('disable-link');
+        $('#prev').addClass('disable-link');
     } else {
         set_result_query(next - 20, prev - 20);
     }
@@ -268,7 +268,7 @@ function on_place_changed() {
         create_restaurant_list_and_markers(location.lat(), location.lng(), 0);
         set_current_location(location.lat(), location.lng());
     } else {
-        $("#city_autocomplete").val('');
+        $('#city_autocomplete').val('');
     }
 }
 
@@ -277,11 +277,11 @@ function on_place_changed() {
 // Location selected will be used to create the restaurant list and markers.
 function on_place_entered() {
     let geocoder = new google.maps.Geocoder();
-    let country = $("#country-list").val();
-    let city = $("#city_autocomplete").val();
+    let country = $('#country-list').val();
+    let city = $('#city_autocomplete').val();
 
     if (!city) {
-        alert("Please enter a valid city.");
+        alert('Please enter a valid city.');
     } else {
         geocoder.geocode({
                 'address': city,
@@ -296,7 +296,7 @@ function on_place_entered() {
                     create_restaurant_list_and_markers(location.lat(), location.lng(), 0);
                     set_current_location(location.lat(), location.lng());
                 } else {
-                    alert("We could not find the specified location. Please enter a valid city.");
+                    alert('We could not find the specified location. Please enter a valid city.');
                 }
             });
     }
@@ -309,9 +309,9 @@ function on_place_entered() {
 function create_restaurant_list_and_markers(lat, lng, start) {
     $.ajax({
         type: 'GET',
-        dataType: "json",
+        dataType: 'json',
         url: `https://developers.zomato.com/api/v2.1/search?start=${start}&lat=${lat}&lon=${lng}&radius=2000&category=8%2C9%2C10&sort=real_distance&order=desc`,
-        headers: { "user-key": ZOMATO_KEY },
+        headers: { 'user-key': ZOMATO_KEY },
     }).done(function(result) {
         if (result.results_shown > 0) {
             clear_markers();
@@ -329,14 +329,14 @@ function create_restaurant_list_and_markers(lat, lng, start) {
                 map.fitBounds(bounds);
             }
         } else {
-            $("#next").addClass('disable-link');
-            alert("No more restaurants found.\n" +
-                "Please check out the previous restaurants by clicking the left arrow button or " +
-                "searching other cites.");
+            $('#next').addClass('disable-link');
+            alert('No more restaurants found.\n' +
+                'Please check out the previous restaurants by clicking the left arrow button or ' +
+                'searching other cites.');
         }
     }).fail(function(error) {
         console.log(error.responseJSON);
-        alert("An error has been encountered. Please consult with your system administrator.");
+        alert('An error has been encountered. Please consult with your system administrator.');
     });
 }
 
@@ -369,7 +369,7 @@ function populate_restaurant_list_from_json(restaurants, view_model) {
         restaurant_array.push(view_model.restaurant_list()[count]);
         count++;
     });
-    localStorage.setItem("restaurants", ko.toJSON(restaurant_array));
+    localStorage.setItem('restaurants', ko.toJSON(restaurant_array));
 }
 
 // Function that will create a restaurant list from the 
@@ -386,7 +386,7 @@ function populate_restaurant_list_from_localstorage(view_model) {
 }
 
 function get_country() {
-    let country = $("#country-list").val();
+    let country = $('#country-list').val();
     let country_list = {};
 
     if (country) {
@@ -416,7 +416,7 @@ function find_country(country_code, view_model) {
 
 function set_current_location(lat, lng) {
     let location = { lat: `${lat}`, lng: `${lng}` };
-    localStorage.setItem("location", JSON.stringify(location));
+    localStorage.setItem('location', JSON.stringify(location));
 }
 
 function get_current_location() {
@@ -425,7 +425,7 @@ function get_current_location() {
 
 function set_result_query(next, prev) {
     let result_query = { next: `${next}`, prev: `${prev}` }
-    localStorage.setItem("result_query", JSON.stringify(result_query));
+    localStorage.setItem('result_query', JSON.stringify(result_query));
 }
 
 function get_result_query() {
@@ -433,7 +433,7 @@ function get_result_query() {
 }
 
 function get_restaurants() {
-    return ko.utils.parseJson(localStorage.getItem("restaurants"))
+    return ko.utils.parseJson(localStorage.getItem('restaurants'))
 }
 
 
@@ -452,17 +452,17 @@ function populate_infowindow(marker, restaurant) {
         // Request restaurant details from Zomato
         $.ajax({
             type: 'GET',
-            dataType: "json",
+            dataType: 'json',
             // TODO - Make a way for the user to insert their own API KEY
-            headers: { "user-key": ZOMATO_KEY },
+            headers: { 'user-key': ZOMATO_KEY },
             url: details_url
         }).done(function(result) {
             restaurant_html = `
-            <div class="infowindow-container">
+            <div class='infowindow-container'>
                 <h1>${result.name}</h1>
-                <img src="${result.thumb}">
+                <img src='${result.thumb}'>
                 <br>
-                <p><a href="${result.url}">Check it out in Zomato!</a><br>
+                <p><a href='${result.url}'>Check it out in Zomato!</a><br>
                 <strong>Address:</strong> ${result.location.address}<br>
                 <strong>Average Cost for Two:</strong> ${result.currency}${result.average_cost_for_two}<br>
                 <strong>Rating:</strong> ${result.user_rating.aggregate_rating}
@@ -474,7 +474,7 @@ function populate_infowindow(marker, restaurant) {
             infowindow.open(map, marker);
         }).fail(function(error) {
             console.log(error.responseJSON);
-            alert("An error has been encountered. Please consult with your system administrator.");
+            alert('An error has been encountered. Please consult with your system administrator.');
         });
     } else {
         // If the user clicks on the same marker, reopen it.
@@ -571,7 +571,7 @@ $(window).ready(function() {
     let rq = get_result_query();
     let prev = parseInt(rq.prev);
     if (prev == -1) {
-        $("#prev").addClass('disable-link');
+        $('#prev').addClass('disable-link');
     }
 })
 
