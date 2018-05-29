@@ -152,6 +152,12 @@ select,
     width: 20px;
 }
 
+.disable-link {
+    pointer-events: none;
+    cursor: default;
+    background-color: grey !important;
+}
+
 #category-list,
 #country-list,
 #city_autocomplete {

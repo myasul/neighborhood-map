@@ -5,6 +5,7 @@ let autocomplete;
 let bounds;
 const ZOMATO_KEY = '000e28228e4fb09d7e02710d59331fbe';
 const DFLT_LOCATION = { lat: '14.5408671', lng: '121.0503183' };
+const CURRLAYER_KEY = '838dedd3c45fbe4a4903ece2a8611164';
 
 // Restaurant Model
 let Restaurant = function() {
@@ -38,6 +39,7 @@ let Restaurant = function() {
 let Country = function(data) {
     this.name = ko.observable(data.name);
     this.code = ko.observable(data.code);
+    this.currency = ko.observable(data.currency_code);
 }
 
 // Location Model
@@ -58,12 +60,13 @@ let ViewModel = function() {
     this.category_list = ko.observableArray();
     this.country_list = ko.observableArray();
     this.current_restaurant = ko.observable();
+    this.current_country = ko.observable();
 
     // Currently, the list of restaurants is saved in retaurants_zomato.json
     // I used Zomato /search API to fetch the list of restaurants within the vicinity of Taguig.
-    if (get_restaurants().length == 0) {
+    if (localStorage.length == 0 || get_restaurants().length == 0) {
         $.getJSON("restaurants_zomato.json", function(json) {
-            set_result_query(20, 0, json.results_found);
+            set_result_query(20, -1);
             set_current_location(DFLT_LOCATION.lat, DFLT_LOCATION.lng);
             populate_restaurant_list_from_json(json.restaurants, self);
             populate_category_list(self);
@@ -79,10 +82,13 @@ let ViewModel = function() {
     }
 
     // Populate the country drop down.
-    $.getJSON("countries.json", function(json) {
+    $.getJSON("countries_zomato.json", function(json) {
         $.each(json, function() {
             self.country_list.push(new Country(this));
         });
+
+        // Set current country to Philippines
+        self.current_country(find_country('PH', self));
     });
 
     // Setting the current restaurant will be triggered when the user clicks
@@ -119,7 +125,7 @@ function init_map(view_model) {
     autocomplete = new google.maps.places.Autocomplete(
         ($("#city_autocomplete").get(0)), {
             types: ['(cities)'],
-            componentRestrictions: { 'country': [] }
+            componentRestrictions: { country: 'PH' }
         }
     );
 
@@ -155,11 +161,27 @@ function init_map(view_model) {
 $("#search").on("click", function() {
     let chosen_category = $("#category-list").val();
     let chosen_cost = $('#cost-slider').slider("option", "value");
+    let current_currency = view_model.current_country().currency();
+    let rate;
 
     // Remove all the current restaurants so that we could populate it
     // with the restaurants that satisfy the filters specified by the user
     view_model.restaurant_list.removeAll();
     let restaurants = get_restaurants();
+
+    // If the restaurants chosen are in a different country 
+    if (current_currency != 'PHP') {
+        $.ajax({
+            type: 'GET',
+            dataType: "json",
+            async: false,
+            url: `https://free.currencyconverterapi.com/api/v5/convert?q=PHP_${current_currency}&compact=ultra`
+        }).done(function(result) {
+            rate = result[`PHP_${current_currency}`];
+        });
+
+        chosen_cost = chosen_cost * rate;
+    }
 
     $.each(restaurants, function() {
         let average_cost_for_two = this.average_cost_for_two;
@@ -196,16 +218,19 @@ $("#show-all").on("click", function() {
 // and this function would call a function that would create the list
 // and set of markers.
 $("#next").on("click", function() {
+    $("#prev").removeClass('disable-link');
+
     let rq = get_result_query();
     let location = get_current_location();
-    let next = parseInt(rq.next) + 20;
+    let next = parseInt(rq.next);
 
-    if (next < rq.results) {
-        create_restaurant_list_and_markers(location.lat, location.lng, next);
-        set_result_query(next, rq.next, rq.results);
+    if (next == 20) {
+        set_result_query(next + 20, 0);
     } else {
-        alert("Error message.");
+        set_result_query(next + 20, next - 20);
     }
+
+    create_restaurant_list_and_markers(location.lat, location.lng, next);
 });
 
 
@@ -213,16 +238,19 @@ $("#next").on("click", function() {
 // and this function would call a function that would create the list
 // and set of markers.
 $("#prev").on("click", function() {
+    $("#next").removeClass('disable-link');
     let rq = get_result_query();
     let location = get_current_location();
-    let prev = rq.prev - 20;
+    let prev = parseInt(rq.prev);
+    let next = parseInt(rq.next)
 
-    if (prev >= 0) {
-        create_restaurant_list_and_markers(location.lat, location.lng, prev);
-        set_result_query(rq.prev, prev, rq.results);
+    if (prev == 0) {
+        set_result_query(next - 20, -1);
+        $("#prev").addClass('disable-link');
     } else {
-        alert("Error message.");
+        set_result_query(next - 20, prev - 20);
     }
+    create_restaurant_list_and_markers(location.lat, location.lng, prev);
 });
 
 /* LOCATION functions */
@@ -232,8 +260,12 @@ $("#prev").on("click", function() {
 // Location selected will be used to create the restaurant list and markers.
 function on_place_changed() {
     let place = autocomplete.getPlace();
+
     if (place.geometry) {
+        let country_code = place.address_components[2].short_name;
         let location = place.geometry.location;
+
+        view_model.current_country(find_country(country_code, view_model));
         create_restaurant_list_and_markers(location.lat(), location.lng(), 0);
         set_current_location(location.lat(), location.lng());
     } else {
@@ -258,7 +290,10 @@ function on_place_entered() {
             },
             function(results, status) {
                 if (status == google.maps.GeocoderStatus.OK) {
+                    let country_code = results[0].address_components[2].short_name;
                     let location = results[0].geometry.location;
+
+                    view_model.current_country(find_country(country_code, view_model));
                     create_restaurant_list_and_markers(location.lat(), location.lng(), 0);
                     set_current_location(location.lat(), location.lng());
                 } else {
@@ -279,20 +314,26 @@ function create_restaurant_list_and_markers(lat, lng, start) {
         url: `https://developers.zomato.com/api/v2.1/search?start=${start}&lat=${lat}&lon=${lng}&radius=2000&category=8%2C9%2C10&sort=real_distance&order=desc`,
         headers: { "user-key": ZOMATO_KEY },
     }).done(function(result) {
-        console.log(result);
-        clear_markers();
-        // clear lists first before populating them.
-        view_model.restaurant_list.removeAll();
-        view_model.category_list.removeAll();
-        bounds = new google.maps.LatLngBounds();
+        if (result.results_shown > 0) {
+            clear_markers();
+            // clear lists first before populating them.
+            view_model.restaurant_list.removeAll();
+            view_model.category_list.removeAll();
+            bounds = new google.maps.LatLngBounds();
 
-        populate_restaurant_list_from_json(result.restaurants, view_model);
-        populate_category_list(view_model);
+            populate_restaurant_list_from_json(result.restaurants, view_model);
+            populate_category_list(view_model);
 
-        if (!view_model.restaurant_list().length == 0) {
-            bounds = init_markers(view_model.restaurant_list(), bounds);
-            // Make sure that all markers are visible in the map
-            map.fitBounds(bounds);
+            if (!view_model.restaurant_list().length == 0) {
+                bounds = init_markers(view_model.restaurant_list(), bounds);
+                // Make sure that all markers are visible in the map
+                map.fitBounds(bounds);
+            }
+        } else {
+            $("#next").addClass('disable-link');
+            alert("No more restaurants found.\n" +
+                "Please check out the previous restaurants by clicking the left arrow button or " +
+                "searching other cites.");
         }
     }).fail(function(error) {
         console.log(error.responseJSON);
@@ -346,15 +387,27 @@ function populate_restaurant_list_from_localstorage(view_model) {
 }
 
 function get_country() {
-    let empty_array = [];
     let country = $("#country-list").val();
-    if (country == 'AA') {
-        return {
-            'country': []
-        };
+    let country_list = {};
+
+    if (country) {
+        country_list.country = country;
     } else {
-        return { 'country': country };
+        country_list.country = 'PH';
     }
+
+    return country_list;
+}
+
+function find_country(country_code, view_model) {
+    let country = ko.utils.arrayFirst(view_model.country_list(), function(country) {
+        return country.code() == country_code;
+    });
+
+    if (country) {
+        return country;
+    }
+    return null;
 }
 
 /*
@@ -371,8 +424,8 @@ function get_current_location() {
     return JSON.parse(localStorage.getItem('location'));
 }
 
-function set_result_query(next, prev, results) {
-    let result_query = { next: `${next}`, prev: `${prev}`, results: `${results}` }
+function set_result_query(next, prev) {
+    let result_query = { next: `${next}`, prev: `${prev}` }
     localStorage.setItem("result_query", JSON.stringify(result_query));
 }
 
@@ -464,8 +517,8 @@ function init_markers(restaurant_list, bounds) {
 // the each markers coordinates and comparing it with
 // the coordinates of the provided restaurant.
 function find_marker(rst) {
-    let rst_lat = rst.lat();
-    let rst_lng = rst.lng();
+    let rst_lat = rst.location.lat();
+    let rst_lng = rst.location.lng();
     let marker;
     for (let i = 0; i < markers.length; i++) {
         let marker_lat = markers[i].getPosition().lat().toFixed(10);
@@ -514,6 +567,14 @@ function show_all_markers() {
         this.setAnimation(google.maps.Animation.DROP);
     });
 }
+
+$(window).ready(function() {
+    let rq = get_result_query();
+    let prev = parseInt(rq.prev);
+    if (prev == -1) {
+        $("#prev").addClass('disable-link');
+    }
+})
 
 let view_model = new ViewModel();
 ko.applyBindings(view_model);
