@@ -34,9 +34,12 @@
                                                         optionsCaption: 'Choose a country', 
                                                         value: current_country,
                                                         event: {change: country_change}"></select>
-                    <br><br>
-                    <label for="city_autocomplete">City: </label>
-                    <input type="text" id="city_autocomplete" class="ui-city-autocomplete">
+                    <br>
+
+                    <form data-bind="submit: search_restaurants_on_entered">
+                        <label for="city_autocomplete">City: </label>
+                        <input type="text" id="city_autocomplete" class="ui-city-autocomplete" data-bind="value: current_city, valueUpdate:'afterkeydown'">
+                    </form>
                 </div>
             </section>
             <section class="filter-container">
@@ -50,16 +53,27 @@
                 </div>
                 <div class="item-container open" id="filter">
                     <label for="category-list">Category:</label>
-                    <select id="category-list" class="ui-category-list" data-bind="options: category_list"></select>
+                    <select id="category-list" class="ui-category-list" data-bind="options: category_list, value: current_category"></select>
                     <span>Average Cost for Two:</span>
-                    <div id="cost-slider" class="ui-slider">
+                    <div id="cost-slider" class="ui-slider" data-bind="slider: cost_filter, sliderOptions: { value: 5000,
+                                                                                                                        min: 500,
+                                                                                                                        max: 5000,
+                                                                                                                        step: 50,
+                                                                                                                        create: function() {
+                                                                                                                            let handle = $('#custom-handle');
+                                                                                                                            handle.text('₱' + $(this).slider('value'));
+                                                                                                                        },
+                                                                                                                        slide: function(event, ui) {
+                                                                                                                            let handle = $('#custom-handle');
+                                                                                                                            handle.text(`₱ ${ui.value}`);
+                                                                                                                        }}">
                         <div id="custom-handle" class="ui-slider-handle"></div>
                     </div>
                     <div class="filter-buttons flex">
-                        <a id="search" href="#">Search</a>
-                        <a id="show-all" href="#">Show All</a>
-                        <a id="prev" class="arrow-button flex" href="#"><img src="img/left-arrow.svg" alt="left arrow"></a>
-                        <a id="next" class="arrow-button flex" href="#"><img src="img/right-arrow.svg" alt="right arrow"></a>
+                        <a id="search" href="#" data-bind="click: search_restaurants">Search</a>
+                        <a id="show-all" href="#" data-bind="click: show_all_restaurants">Show All</a>
+                        <a id="prev" class="arrow-button flex" href="#" data-bind="click: previous_restaurants"><img src="img/left-arrow.svg" alt="left arrow"></a>
+                        <a id="next" class="arrow-button flex" href="#" data-bind="click: next_restaurants"><img src="img/right-arrow.svg" alt="right arrow"></a>
                     </div>
                 </div>
             </section>

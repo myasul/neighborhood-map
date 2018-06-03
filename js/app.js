@@ -6,6 +6,34 @@ let bounds;
 const ZOMATO_KEY = '000e28228e4fb09d7e02710d59331fbe';
 const DFLT_LOCATION = { lat: '14.5408671', lng: '121.0503183' };
 
+// Slider Custom Binding
+// Code from https://stackoverflow.com/a/18331650
+ko.bindingHandlers.slider = {
+    init: function(element, valueAccessor, allBindingsAccessor) {
+        let options = allBindingsAccessor().sliderOptions || {};
+        $(element).slider(options);
+        ko.utils.registerEventHandler(element, "slidechange", function(event, ui) {
+            let observable = valueAccessor();
+            observable(ui.value);
+        });
+        ko.utils.domNodeDisposal.addDisposeCallback(element, function() {
+            $(element).slider("destroy");
+        });
+        ko.utils.registerEventHandler(element, "slide", function(event, ui) {
+            let observable = valueAccessor();
+            observable(ui.value);
+        });
+    },
+    update: function(element, valueAccessor, allBindingsAccessor) {
+        let value = ko.utils.unwrapObservable(valueAccessor());
+        if (isNaN(value)) {
+            value = 0;
+        }
+        $(element).slider("option", allBindingsAccessor().sliderOptions);
+        $(element).slider("value", value);
+    }
+}
+
 // Restaurant Model
 let Restaurant = function() {
     this.restaurant_id = ko.observable();
@@ -43,12 +71,12 @@ let Country = function(data) {
 
 // Location Model
 let Location = function() {
-    this.lat = ko.observable();
-    this.lng = ko.observable();
+    this.lat = "";
+    this.lng = "";
 
     this.set_location = function(lat, lng) {
-        this.lat = ko.observable(lat);
-        this.lng = ko.observable(lng);
+        this.lat = lat;
+        this.lng = lng;
     }
 }
 
@@ -56,12 +84,16 @@ let Location = function() {
 let ViewModel = function() {
     let self = this;
 
-    // Populate the country drop down.
     this.country_list = ko.observableArray();
     this.restaurant_list = ko.observableArray();
     this.category_list = ko.observableArray();
+
     this.current_restaurant = ko.observable();
     this.current_country = ko.observable();
+    this.current_category = ko.observable();
+    this.current_city = ko.observable();
+
+    this.cost_filter = ko.observable(5000);
 
     // Currently, the list of restaurants is saved in retaurants_zomato.json
     // I used Zomato /search API to fetch the list of restaurants within the vicinity of Taguig.
@@ -107,6 +139,12 @@ let ViewModel = function() {
         }
     }
 
+    // Search the place manually when the user presses enter
+    this.search_restaurants_on_entered = function() {
+        on_place_entered(self.current_city());
+    }
+
+    // Populate the country drop down.
     $.getJSON('countries.json', function(json) {
         $.each(json, function() {
             self.country_list.push(new Country(this));
@@ -147,13 +185,6 @@ function init_map(view_model) {
     // Use that to search restaurants and zoom the map in on that city.
     autocomplete.addListener('place_changed', on_place_changed);
 
-    // Search the place manually when the user presses enter
-    $('#city_autocomplete').keydown(function() {
-        if (event.which == 13) {
-            on_place_entered();
-        }
-    });
-
     bounds = init_markers(view_model.restaurant_list(), bounds);
 
     // Make sure that all markers are visible in the map
@@ -166,9 +197,10 @@ function init_map(view_model) {
 
 // Searches all the restaurants that matches
 // the cost and category the user has provided
-$('#search').on('click', function() {
-    let chosen_category = $('#category-list').val();
-    let chosen_cost = $('#cost-slider').slider('option', 'value');
+function search_restaurants() {
+    let chosen_category = view_model.current_category();
+    let chosen_cost = view_model.cost_filter();
+    console.log(view_model.cost_filter());
     let current_currency = get_currency();
     let rate;
 
@@ -177,7 +209,7 @@ $('#search').on('click', function() {
     view_model.restaurant_list.removeAll();
     let restaurants = get_restaurants();
 
-    // If the restaurants chosen are in a different country 
+    // If the restaurants chosen are in a different country. 
     if (current_currency != 'PHP') {
         $.ajax({
             type: 'GET',
@@ -186,6 +218,9 @@ $('#search').on('click', function() {
             url: `https://free.currencyconverterapi.com/api/v5/convert?q=PHP_${current_currency}&compact=ultra`
         }).done(function(result) {
             rate = result[`PHP_${current_currency}`];
+        }).fail(function(error) {
+            console.log(error.responseText);
+            alert('An error has been encountered. Please consult with your system administrator.');
         });
 
         chosen_cost = chosen_cost * rate;
@@ -209,23 +244,23 @@ $('#search').on('click', function() {
     // markers of the filtered restaurants
     hide_markers();
     show_markers(view_model.restaurant_list());
-});
+}
 
 // Provides a way for the user to 'reset' and 
 // show all the restaurants and markers.
-$('#show-all').on('click', function() {
+function show_all_restaurants() {
     // clear lists first before populating them.
     view_model.restaurant_list.removeAll();
 
     populate_restaurant_list_from_localstorage(view_model);
     map.fitBounds(bounds);
     show_all_markers();
-});
+};
 
 // This will retrieve the next set of restaurants (max of 20 restaurants)
 // and this function would call a function that would create the list
 // and set of markers.
-$('#next').on('click', function() {
+function next_restaurants() {
     $('#prev').removeClass('disable-link');
 
     let rq = get_result_query();
@@ -239,13 +274,13 @@ $('#next').on('click', function() {
     }
 
     create_restaurant_list_and_markers(location.lat, location.lng, next);
-});
+};
 
 
 // This will retrieve the previous set of restaurants (max of 20 restaurants)
 // and this function would call a function that would create the list
 // and set of markers.
-$('#prev').on('click', function() {
+function previous_restaurants() {
     $('#next').removeClass('disable-link');
     let rq = get_result_query();
     let location = get_current_location();
@@ -259,7 +294,7 @@ $('#prev').on('click', function() {
         set_result_query(next - 20, prev - 20);
     }
     create_restaurant_list_and_markers(location.lat, location.lng, prev);
-});
+}
 
 /* LOCATION functions */
 
@@ -278,17 +313,15 @@ function on_place_changed() {
         create_restaurant_list_and_markers(location.lat(), location.lng(), 0);
         set_current_location(location.lat(), location.lng());
     } else {
-        $('#city_autocomplete').val('');
+        view_model.current_city("");
     }
 }
 
 // Function that is being called when the user choose to compete the address
 // and click the enter button from the keyboard.
 // Location selected will be used to create the restaurant list and markers.
-function on_place_entered() {
+function on_place_entered(city) {
     let geocoder = new google.maps.Geocoder();
-    let country = $('#country-list').val();
-    let city = $('#city_autocomplete').val();
 
     if (!city) {
         alert('Please enter a valid city.');
@@ -482,7 +515,7 @@ function populate_infowindow(marker, restaurant) {
                 <h1>${result.name}</h1>
                 <img src='${result.thumb}'>
                 <br>
-                <p><a href='${result.url}'>Check it out in Zomato!</a><br>
+                <p><a href='${result.url}' target="_blank">Check it out in Zomato!</a><br>
                 <strong>Address:</strong> ${result.location.address}<br>
                 <strong>Average Cost for Two:</strong> ${result.currency}${result.average_cost_for_two}<br>
                 <strong>Rating:</strong> ${result.user_rating.aggregate_rating}
@@ -511,9 +544,9 @@ function init_markers(restaurant_list, bounds) {
     $.each(restaurant_list, function() {
         let location = {};
         let self = this;
-        location.lat = parseFloat(this.location.lat());
-        location.lng = parseFloat(this.location.lng());
-        var marker = new google.maps.Marker({
+        location.lat = parseFloat(this.location.lat);
+        location.lng = parseFloat(this.location.lng);
+        let marker = new google.maps.Marker({
             position: location,
             animation: google.maps.Animation.DROP,
             title: this.name(),
@@ -536,8 +569,8 @@ function init_markers(restaurant_list, bounds) {
 // the each markers coordinates and comparing it with
 // the coordinates of the provided restaurant.
 function find_marker(rst) {
-    let rst_lat = rst.location.lat();
-    let rst_lng = rst.location.lng();
+    let rst_lat = rst.location.lat;
+    let rst_lng = rst.location.lng;
     let marker;
     for (let i = 0; i < markers.length; i++) {
         let marker_lat = markers[i].getPosition().lat().toFixed(10);
@@ -593,7 +626,7 @@ $(window).ready(function() {
     if (prev == -1) {
         $('#prev').addClass('disable-link');
     }
-})
+});
 
 let view_model = new ViewModel();
 ko.applyBindings(view_model);

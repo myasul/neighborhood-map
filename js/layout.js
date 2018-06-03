@@ -141,24 +141,9 @@
             }
         });
 
-    })
-
-    // Jquery UI Slider
-    let handle = $('#custom-handle');
-    $('#cost-slider').slider({
-        value: 5000,
-        min: 500,
-        max: 5000,
-        step: 50,
-        create: function() {
-            handle.text('₱' + $(this).slider('value'));
-        },
-        slide: function(event, ui) {
-            handle.text(`₱ ${ui.value}`);
-        }
     });
 
-})()
+})();
 
 // Return an error when initialization of google map fails.
 function init_map_failed() {
