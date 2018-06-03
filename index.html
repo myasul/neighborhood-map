@@ -1,4 +1,5 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 
 <head>
     <title>Restaurant Finder</title>
@@ -10,7 +11,7 @@
 
 <body>
     <header>
-        <img src="img/burger.svg">
+        <img src="img/burger.svg" alt="burger icon to toggle the side bar">
         <h1>Restaurant Finder</h1>
     </header>
     <main class="flex">
@@ -27,9 +28,9 @@
                 <div class="item-container open" id="location">
                     <label for="country-list">Country:</label>
                     <select id="country-list" data-bind="options: country_list, 
-                                                    optionsText: 'name',
-                                                    optionsValue: 'code',
-                                                    optionsCaption: 'Choose a country'" ,></select>
+                                                        optionsText: 'name',
+                                                        optionsValue: 'code',
+                                                        optionsCaption: 'Choose a country'"></select>
                     <br><br>
                     <label for="city_autocomplete">City: </label>
                     <input type="text" id="city_autocomplete">
@@ -47,15 +48,15 @@
                 <div class="item-container open" id="filter">
                     <label for="category-list">Category:</label>
                     <select id="category-list" data-bind="options: category_list"></select>
-                    <label for="cost-slider">Average Cost for Two:</label>
+                    <span>Average Cost for Two:</span>
                     <div id="cost-slider">
                         <div id="custom-handle" class="ui-slider-handle"></div>
                     </div>
                     <div class="filter-buttons flex">
                         <a id="search" href="#">Search</a>
                         <a id="show-all" href="#">Show All</a>
-                        <a id="prev" class="arrow-button flex" href="#"><img src="img/left-arrow.svg"></a>
-                        <a id="next" class="arrow-button flex" href="#"><img src="img/right-arrow.svg"></a>
+                        <a id="prev" class="arrow-button flex" href="#"><img src="img/left-arrow.svg" alt="left arrow"></a>
+                        <a id="next" class="arrow-button flex" href="#"><img src="img/right-arrow.svg" alt="right arrow"></a>
                     </div>
                 </div>
             </section>
@@ -81,10 +82,9 @@
     <script defer src="js/jquery-ui.min.js"></script>
     <script defer src="js/jquery.ui.touch-punch.min.js"></script>
     <script defer src="js/knockout.js"></script>
-    <script defer src="https://maps.googleapis.com/maps/api/js?libraries=places,geometry&key=AIzaSyD8-Remi8efHedF6YYqHpeLb4NvrGpBxd4"></script>
-    <script defer src="js/app.js"></script>
     <script defer src="js/layout.js"></script>
-
+    <script defer src="https://maps.googleapis.com/maps/api/js?libraries=places,geometry&key=AIzaSyD8-Remi8efHedF6YYqHpeLb4NvrGpBxd4" onerror="init_map_failed()"></script>
+    <script defer src="js/app.js"></script>
 </body>
 
 </html>

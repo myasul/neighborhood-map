@@ -105,6 +105,7 @@ select,
 }
 
 .filter-container label,
+.filter-container span,
 .location-container label:nth-of-type(1) {
     display: block;
     margin: 0;

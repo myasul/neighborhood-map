@@ -159,3 +159,8 @@
     });
 
 })()
+
+// Return an error when initialization of google map fails.
+function init_map_failed() {
+    alert('An error has been encountered. Please consult with your system administrator.');
+}
