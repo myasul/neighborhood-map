@@ -31,7 +31,9 @@
                     <select id="country-list" class="ui-country-list" data-bind="options: country_list, 
                                                         optionsText: 'name',
                                                         optionsValue: 'code',
-                                                        optionsCaption: 'Choose a country'"></select>
+                                                        optionsCaption: 'Choose a country', 
+                                                        value: current_country,
+                                                        event: {change: country_change}"></select>
                     <br><br>
                     <label for="city_autocomplete">City: </label>
                     <input type="text" id="city_autocomplete" class="ui-city-autocomplete">

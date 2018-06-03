@@ -36,9 +36,9 @@ let Restaurant = function() {
 
 // Country Model
 let Country = function(data) {
-    this.name = ko.observable(data.name);
-    this.code = ko.observable(data.code);
-    this.currency = ko.observable(data.currency_code);
+    this.name = data.name;
+    this.code = data.code;
+    this.currency = data.currency_code;
 }
 
 // Location Model
@@ -55,16 +55,23 @@ let Location = function() {
 /* INITIALIZE VIEW MODEL */
 let ViewModel = function() {
     let self = this;
+
+    // Populate the country drop down.
+    this.country_list = ko.observableArray();
     this.restaurant_list = ko.observableArray();
     this.category_list = ko.observableArray();
-    this.country_list = ko.observableArray();
     this.current_restaurant = ko.observable();
     this.current_country = ko.observable();
 
     // Currently, the list of restaurants is saved in retaurants_zomato.json
     // I used Zomato /search API to fetch the list of restaurants within the vicinity of Taguig.
-    if (localStorage.length == 0 || get_restaurants().length == 0) {
-        $.getJSON('restaurants_zomato.json', function(json) {
+    if (localStorage.length == 0 || get_restaurants() == 0) {
+        $.ajax({
+            type: 'GET',
+            dataType: 'json',
+            url: `https://developers.zomato.com/api/v2.1/search?lat=${DFLT_LOCATION.lat}&lon=${DFLT_LOCATION.lng}&radius=2000&category=8%2C9%2C10&sort=real_distance&order=desc`,
+            headers: { 'user-key': ZOMATO_KEY },
+        }).done(function(json) {
             set_result_query(20, -1);
             set_current_location(DFLT_LOCATION.lat, DFLT_LOCATION.lng);
             populate_restaurant_list_from_json(json.restaurants, self);
@@ -73,22 +80,12 @@ let ViewModel = function() {
         }).fail(function(error) {
             console.log(error.responseText);
             alert('An error has been encountered. Please consult with your system administrator.');
-        });;
+        });
     } else {
         populate_restaurant_list_from_localstorage(self);
         populate_category_list(self);
         init_map(self);
     }
-
-    // Populate the country drop down.
-    $.getJSON('countries_zomato.json', function(json) {
-        $.each(json, function() {
-            self.country_list.push(new Country(this));
-        });
-
-        // Set current country to Philippines
-        self.current_country(find_country('PH', self));
-    });
 
     // Setting the current restaurant will be triggered when the user clicks
     // on a restaurant on the list
@@ -108,6 +105,24 @@ let ViewModel = function() {
             // It also should pop out the info window.
             populate_infowindow(marker, this);
         }
+    }
+
+    $.getJSON('countries.json', function(json) {
+        $.each(json, function() {
+            self.country_list.push(new Country(this));
+        });
+
+        // Set current country to Philippines
+        self.current_country('PH');
+    }).fail(function(error) {
+        console.log(error.responseText);
+        alert('An error has been encountered. Please consult with your system administrator.');
+    });
+
+    // Set the country restriction depending on the country that
+    // the user picked in the country list
+    this.country_change = function() {
+        autocomplete.setComponentRestrictions(get_country());
     }
 }
 
@@ -132,12 +147,6 @@ function init_map(view_model) {
     // Use that to search restaurants and zoom the map in on that city.
     autocomplete.addListener('place_changed', on_place_changed);
 
-    // Set the country restriction depending on the country that
-    // the user picked in the country list
-    $('#country-list').change(function() {
-        autocomplete.setComponentRestrictions(get_country());
-    });
-
     // Search the place manually when the user presses enter
     $('#city_autocomplete').keydown(function() {
         if (event.which == 13) {
@@ -160,7 +169,7 @@ function init_map(view_model) {
 $('#search').on('click', function() {
     let chosen_category = $('#category-list').val();
     let chosen_cost = $('#cost-slider').slider('option', 'value');
-    let current_currency = view_model.current_country().currency();
+    let current_currency = get_currency();
     let rate;
 
     // Remove all the current restaurants so that we could populate it
@@ -264,7 +273,8 @@ function on_place_changed() {
         let country_code = place.address_components[2].short_name;
         let location = place.geometry.location;
 
-        view_model.current_country(find_country(country_code, view_model));
+        // TODO
+        //view_model.current_country(find_country(country_code, view_model));
         create_restaurant_list_and_markers(location.lat(), location.lng(), 0);
         set_current_location(location.lat(), location.lng());
     } else {
@@ -292,7 +302,8 @@ function on_place_entered() {
                     let country_code = results[0].address_components[2].short_name;
                     let location = results[0].geometry.location;
 
-                    view_model.current_country(find_country(country_code, view_model));
+                    // TODO
+                    //view_model.current_country(find_country(country_code, view_model));
                     create_restaurant_list_and_markers(location.lat(), location.lng(), 0);
                     set_current_location(location.lat(), location.lng());
                 } else {
@@ -386,7 +397,7 @@ function populate_restaurant_list_from_localstorage(view_model) {
 }
 
 function get_country() {
-    let country = $('#country-list').val();
+    let country = view_model.current_country();
     let country_list = {};
 
     if (country) {
@@ -398,9 +409,14 @@ function get_country() {
     return country_list;
 }
 
-function find_country(country_code, view_model) {
+function get_currency() {
+    country = find_country(view_model.current_country());
+    return country.currency;
+}
+
+function find_country(country_code) {
     let country = ko.utils.arrayFirst(view_model.country_list(), function(country) {
-        return country.code() == country_code;
+        return country.code == country_code;
     });
 
     if (country) {
@@ -433,7 +449,11 @@ function get_result_query() {
 }
 
 function get_restaurants() {
-    return ko.utils.parseJson(localStorage.getItem('restaurants'))
+    let restaurants = ko.utils.parseJson(localStorage.getItem('restaurants'));
+    if (!restaurants) {
+        return 0;
+    }
+    return restaurants;
 }
 
 
