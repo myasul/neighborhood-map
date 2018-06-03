@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css?family=Open+Sans');
 html,
 body {
     margin: 0;
@@ -24,7 +23,6 @@ header img {
     padding-top: 5px;
     height: 35px;
     width: 40px;
-    margin: px auto;
 }
 
 header img:hover {
@@ -80,7 +78,7 @@ svg {
 }
 
 .item-container,
-#restaurant {
+.restaurant-canvas {
     padding-left: 1.5em;
 }
 
@@ -90,11 +88,11 @@ input {
 
 input,
 select,
-#custom-handle {
+.ui-slider-handle {
     outline: none;
 }
 
-#country-list {
+.ui-country-list {
     width: 150px;
 }
 
@@ -113,7 +111,7 @@ select,
     color: white;
 }
 
-#cost-slider {
+.ui-slider {
     width: 250px;
     margin-top: 8px;
 }
@@ -159,9 +157,9 @@ select,
     background-color: grey !important;
 }
 
-#category-list,
-#country-list,
-#city_autocomplete {
+.ui-category-list,
+.ui-country-list,
+.ui-city-autocomplete {
     font-size: 1em;
 }
 
@@ -170,7 +168,7 @@ select,
     transition: 0.5s height ease;
 }
 
-#restaurant {
+.restaurant-canvas {
     overflow-y: auto;
 }
 
@@ -213,14 +211,13 @@ li:focus {
     transition: 0.3s height, 0.3s visibility;
 }
 
-#location,
-#filter,
-#restaurant {
+.item-container,
+.restaurant-canvas {
     height: calc(100% - 40px);
     transition: 0.5s width ease;
 }
 
-#map {
+.map-canvas {
     background-color: gray;
     margin: 0;
     width: calc(100% - 330px);
@@ -229,7 +226,7 @@ li:focus {
 }
 
 .infowindow-container {
-    width: 250;
+    width: 250px;
 }
 
 @media screen and (min-height:710px) {
@@ -249,7 +246,7 @@ li:focus {
     .filter-container {
         height: calc(21vh - 1px);
     }
-    #map {
+    .map-canvas {
         height: 95.5vh;
     }
     .restaurant-container {

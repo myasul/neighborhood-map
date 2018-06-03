@@ -7,6 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/jquery-ui.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans">
 </head>
 
 <body>
@@ -27,13 +28,13 @@
                 </div>
                 <div class="item-container open" id="location">
                     <label for="country-list">Country:</label>
-                    <select id="country-list" data-bind="options: country_list, 
+                    <select id="country-list" class="ui-country-list" data-bind="options: country_list, 
                                                         optionsText: 'name',
                                                         optionsValue: 'code',
                                                         optionsCaption: 'Choose a country'"></select>
                     <br><br>
                     <label for="city_autocomplete">City: </label>
-                    <input type="text" id="city_autocomplete">
+                    <input type="text" id="city_autocomplete" class="ui-city-autocomplete">
                 </div>
             </section>
             <section class="filter-container">
@@ -47,9 +48,9 @@
                 </div>
                 <div class="item-container open" id="filter">
                     <label for="category-list">Category:</label>
-                    <select id="category-list" data-bind="options: category_list"></select>
+                    <select id="category-list" class="ui-category-list" data-bind="options: category_list"></select>
                     <span>Average Cost for Two:</span>
-                    <div id="cost-slider">
+                    <div id="cost-slider" class="ui-slider">
                         <div id="custom-handle" class="ui-slider-handle"></div>
                     </div>
                     <div class="filter-buttons flex">
@@ -69,14 +70,14 @@
                         </g>
                     </svg>
                 </div>
-                <div class="open" id="restaurant">
+                <div class="open restaurant-canvas" id="restaurant">
                     <ul class="restaurant-list" data-bind="foreach: restaurant_list">
                         <li data-bind="text: name, click: $parent.set_current_restaurant, css: {selected: selected() == true}"></li>
                     </ul>
                 </div>
             </section>
         </aside>
-        <section id="map"></section>
+        <section id="map" class="map-canvas"></section>
     </main>
     <script defer src="js/jquery.min.js"></script>
     <script defer src="js/jquery-ui.min.js"></script>
