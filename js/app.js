@@ -94,6 +94,8 @@ let ViewModel = function() {
     this.current_city = ko.observable();
 
     this.cost_filter = ko.observable(5000);
+    this.prev_disabled = ko.observable(false);
+    this.next_disabled = ko.observable(false);
 
     // Currently, the list of restaurants is saved in retaurants_zomato.json
     // I used Zomato /search API to fetch the list of restaurants within the vicinity of Taguig.
@@ -261,8 +263,7 @@ function show_all_restaurants() {
 // and this function would call a function that would create the list
 // and set of markers.
 function next_restaurants() {
-    $('#prev').removeClass('disable-link');
-
+    if (view_model.prev_disabled()) view_model.prev_disabled(false);
     let rq = get_result_query();
     let location = get_current_location();
     let next = parseInt(rq.next);
@@ -281,7 +282,7 @@ function next_restaurants() {
 // and this function would call a function that would create the list
 // and set of markers.
 function previous_restaurants() {
-    $('#next').removeClass('disable-link');
+    if (view_model.next_disabled()) view_model.next_disabled(false);
     let rq = get_result_query();
     let location = get_current_location();
     let prev = parseInt(rq.prev);
@@ -289,7 +290,7 @@ function previous_restaurants() {
 
     if (prev == 0) {
         set_result_query(next - 20, -1);
-        $('#prev').addClass('disable-link');
+        view_model.prev_disabled(true);
     } else {
         set_result_query(next - 20, prev - 20);
     }
@@ -373,7 +374,7 @@ function create_restaurant_list_and_markers(lat, lng, start) {
                 map.fitBounds(bounds);
             }
         } else {
-            $('#next').addClass('disable-link');
+            view_model.next_disabled(true);
             alert('No more restaurants found.\n' +
                 'Please check out the previous restaurants by clicking the left arrow button or ' +
                 'searching other cites.');
@@ -623,9 +624,7 @@ function show_all_markers() {
 $(window).ready(function() {
     let rq = get_result_query();
     let prev = parseInt(rq.prev);
-    if (prev == -1) {
-        $('#prev').addClass('disable-link');
-    }
+    if (prev == -1) view_model.prev_disabled(true);
 });
 
 let view_model = new ViewModel();

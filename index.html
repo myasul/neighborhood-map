@@ -72,8 +72,12 @@
                     <div class="filter-buttons flex">
                         <a id="search" href="#" data-bind="click: search_restaurants">Search</a>
                         <a id="show-all" href="#" data-bind="click: show_all_restaurants">Show All</a>
-                        <a id="prev" class="arrow-button flex" href="#" data-bind="click: previous_restaurants"><img src="img/left-arrow.svg" alt="left arrow"></a>
-                        <a id="next" class="arrow-button flex" href="#" data-bind="click: next_restaurants"><img src="img/right-arrow.svg" alt="right arrow"></a>
+                        <a id="prev" class="arrow-button flex" href="#" data-bind="click: previous_restaurants, css: { disable: prev_disabled() }">
+                            <img src="img/left-arrow.svg" alt="left arrow">
+                        </a>
+                        <a id="next" class="arrow-button flex" href="#" data-bind="click: next_restaurants, css: { disable: next_disabled() }">
+                            <img src="img/right-arrow.svg" alt="right arrow">
+                        </a>
                     </div>
                 </div>
             </section>

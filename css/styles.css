@@ -151,7 +151,7 @@ select,
     width: 20px;
 }
 
-.disable-link {
+.disable {
     pointer-events: none;
     cursor: default;
     background-color: grey !important;
