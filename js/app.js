@@ -43,6 +43,8 @@ let Restaurant = function(data, type) {
         this.selected = ko.observable(false);
         this.categories = data.cuisines.split(', ');
         this.average_cost_for_two = data.average_cost_for_two;
+        this.displayed = ko.observable(true);
+        this.marker = null;
     } else {
         this.restaurant_id = data.restaurant_id;
         this.location = new Location(data.location.lat, data.location.lng);
@@ -50,6 +52,8 @@ let Restaurant = function(data, type) {
         this.selected = ko.observable(data.selected);
         this.categories = data.categories;
         this.average_cost_for_two = data.average_cost_for_two;
+        this.displayed = ko.observable(true);
+        this.marker = null;
     }
 
 }
@@ -116,7 +120,7 @@ let ViewModel = function() {
         }
         self.current_restaurant(this);
         self.current_restaurant().selected(true);
-        let marker = find_marker(this);
+        let marker = this.marker;
 
         if (marker) {
             // When the user clicks a restaurant the markers linked to it should bounce.
@@ -174,7 +178,7 @@ function init_map(view_model) {
     // Use that to search restaurants and zoom the map in on that city.
     autocomplete.addListener('place_changed', on_place_changed);
 
-    bounds = init_markers(view_model.restaurant_list(), bounds);
+    bounds = init_markers(view_model, bounds);
 
     // Make sure that all markers are visible in the map
     map.fitBounds(bounds);
@@ -191,11 +195,6 @@ function search_restaurants() {
     let chosen_cost = view_model.cost_filter();
     let current_currency = get_currency();
     let rate;
-
-    // Remove all the current restaurants so that we could populate it
-    // with the restaurants that satisfy the filters specified by the user
-    view_model.restaurant_list.removeAll();
-    let restaurants = get_restaurants();
 
     // If the restaurants chosen are in a different country. 
     if (current_currency != 'PHP') {
@@ -214,15 +213,18 @@ function search_restaurants() {
         chosen_cost = chosen_cost * rate;
     }
 
-    $.each(restaurants, function() {
+    $.each(view_model.restaurant_list(), function() {
         let average_cost_for_two = this.average_cost_for_two;
         let categories = this.categories;
 
         match = categories.find(function(category) {
             return category == chosen_category;
         });
-        if (match && average_cost_for_two <= chosen_cost) {
-            view_model.restaurant_list.push(new Restaurant(this, 'search'));
+
+        if (!match || (match && average_cost_for_two > chosen_cost)) {
+            this.displayed(false);
+        } else {
+            this.displayed(true);
         }
     });
 
@@ -236,11 +238,12 @@ function search_restaurants() {
 // show all the restaurants and markers.
 function show_all_restaurants() {
     // clear lists first before populating them.
-    view_model.restaurant_list.removeAll();
-
-    populate_restaurant_list_from_localstorage(view_model);
     map.fitBounds(bounds);
-    show_all_markers();
+    $.each(view_model.restaurant_list(), function() {
+        this.displayed(true);
+        this.marker.setMap(map);
+        this.marker.setAnimation(google.maps.Animation.DROP);
+    });
 };
 
 // This will retrieve the next set of restaurants (max of 20 restaurants)
@@ -341,8 +344,8 @@ function create_restaurant_list_and_markers(lat, lng, start) {
         headers: { 'user-key': ZOMATO_KEY },
     }).done(function(result) {
         if (result.results_shown > 0) {
-            clear_markers();
             // clear lists first before populating them.
+            hide_markers();
             view_model.restaurant_list.removeAll();
             view_model.category_list.removeAll();
             bounds = new google.maps.LatLngBounds();
@@ -351,7 +354,7 @@ function create_restaurant_list_and_markers(lat, lng, start) {
             populate_category_list(view_model);
 
             if (!view_model.restaurant_list().length == 0) {
-                bounds = init_markers(view_model.restaurant_list(), bounds);
+                bounds = init_markers(view_model, bounds);
                 // Make sure that all markers are visible in the map
                 map.fitBounds(bounds);
             }
@@ -518,8 +521,8 @@ function populate_infowindow(marker, restaurant) {
 
 // Function will put all markers on all the restaurants' location 
 // provided in the restaurant list.
-function init_markers(restaurant_list, bounds) {
-    $.each(restaurant_list, function() {
+function init_markers(view_model, bounds) {
+    $.each(view_model.restaurant_list(), function() {
         let location = {};
         let self = this;
         location.lat = parseFloat(this.location.lat);
@@ -537,27 +540,11 @@ function init_markers(restaurant_list, bounds) {
             toggle_bounce(marker);
             populate_infowindow(marker, self);
         });
-        markers.push(marker);
+
+        this.marker = marker;
         bounds.extend(location);
     });
     return bounds;
-}
-
-// The function will find the restaurant's marker by looking in 
-// the each markers coordinates and comparing it with
-// the coordinates of the provided restaurant.
-function find_marker(rst) {
-    let rst_lat = rst.location.lat;
-    let rst_lng = rst.location.lng;
-    let marker;
-    for (let i = 0; i < markers.length; i++) {
-        let marker_lat = markers[i].getPosition().lat().toFixed(10);
-        let marker_lng = markers[i].getPosition().lng().toFixed(10);
-        if ((rst_lat == marker_lat) && (rst_lng == marker_lng)) {
-            return markers[i];
-        }
-    }
-    return null;
 }
 
 // Will trigger a bounce animation on the marker provided.
@@ -569,32 +556,22 @@ function toggle_bounce(marker) {
     }, 2000);
 }
 
-function clear_markers() {
-    hide_markers();
-    markers = [];
-}
-
 function hide_markers() {
-    $.each(markers, function() {
-        this.setMap(null);
+    $.each(view_model.restaurant_list(), function() {
+        this.marker.setMap(null);
     });
 }
 
 function show_markers(restaurant_list) {
     $.each(restaurant_list, function() {
-        let marker = find_marker(this);
+        if (this.displayed()) {
+            let marker = this.marker;
 
-        if (marker) {
-            marker.setMap(map);
-            marker.setAnimation(google.maps.Animation.DROP);
+            if (marker) {
+                marker.setMap(map);
+                marker.setAnimation(google.maps.Animation.DROP);
+            }
         }
-    });
-}
-
-function show_all_markers() {
-    $.each(markers, function() {
-        this.setMap(map);
-        this.setAnimation(google.maps.Animation.DROP);
     });
 }
 

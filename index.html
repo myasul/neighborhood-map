@@ -92,7 +92,7 @@
                 </div>
                 <div class="open restaurant-canvas" id="restaurant">
                     <ul class="restaurant-list" data-bind="foreach: restaurant_list">
-                        <li data-bind="text: name, click: $parent.set_current_restaurant, css: {selected: selected()}"></li>
+                        <li data-bind="text: name, click: $parent.set_current_restaurant, css: {selected: selected()}, visible: displayed"></li>
                     </ul>
                 </div>
             </section>
