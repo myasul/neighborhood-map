@@ -35,31 +35,23 @@ ko.bindingHandlers.slider = {
 }
 
 // Restaurant Model
-let Restaurant = function() {
-    this.restaurant_id = ko.observable();
-    this.location = new Location();
-    this.name = ko.observable();
-    this.selected = ko.observable();
-    this.categories = ko.observableArray();
-    this.average_cost_for_two = ko.observable();
-
-    this.create_from_search = function(data) {
-        this.restaurant_id(data.restaurant_id);
-        this.location.set_location(data.location.lat, data.location.lng);
-        this.name(data.name);
-        this.selected(data.selected);
-        this.categories(data.categories);
-        this.average_cost_for_two(data.average_cost_for_two);
+let Restaurant = function(data, type) {
+    if (type == 'json') {
+        this.restaurant_id = data.id;
+        this.location = new Location(data.location.latitude, data.location.longitude);
+        this.name = data.name;
+        this.selected = ko.observable(false);
+        this.categories = data.cuisines.split(', ');
+        this.average_cost_for_two = data.average_cost_for_two;
+    } else {
+        this.restaurant_id = data.restaurant_id;
+        this.location = new Location(data.location.lat, data.location.lng);
+        this.name = data.name;
+        this.selected = ko.observable(data.selected);
+        this.categories = data.categories;
+        this.average_cost_for_two = data.average_cost_for_two;
     }
 
-    this.create_from_json = function(data) {
-        this.restaurant_id(data.id);
-        this.location.set_location(data.location.latitude, data.location.longitude);
-        this.name(data.name);
-        this.selected(false);
-        this.categories(data.cuisines.split(', '));
-        this.average_cost_for_two(data.average_cost_for_two);
-    }
 }
 
 // Country Model
@@ -70,14 +62,9 @@ let Country = function(data) {
 }
 
 // Location Model
-let Location = function() {
-    this.lat = "";
-    this.lng = "";
-
-    this.set_location = function(lat, lng) {
-        this.lat = lat;
-        this.lng = lng;
-    }
+let Location = function(lat, lng) {
+    this.lat = lat;
+    this.lng = lng;
 }
 
 /* INITIALIZE VIEW MODEL */
@@ -202,7 +189,6 @@ function init_map(view_model) {
 function search_restaurants() {
     let chosen_category = view_model.current_category();
     let chosen_cost = view_model.cost_filter();
-    console.log(view_model.cost_filter());
     let current_currency = get_currency();
     let rate;
 
@@ -236,9 +222,7 @@ function search_restaurants() {
             return category == chosen_category;
         });
         if (match && average_cost_for_two <= chosen_cost) {
-            let restaurant = new Restaurant();
-            restaurant.create_from_search(this)
-            view_model.restaurant_list.push(restaurant);
+            view_model.restaurant_list.push(new Restaurant(this, 'search'));
         }
     });
 
@@ -309,8 +293,7 @@ function on_place_changed() {
         let country_code = place.address_components[2].short_name;
         let location = place.geometry.location;
 
-        // TODO
-        //view_model.current_country(find_country(country_code, view_model));
+        view_model.current_country(country_code);
         create_restaurant_list_and_markers(location.lat(), location.lng(), 0);
         set_current_location(location.lat(), location.lng());
     } else {
@@ -336,8 +319,7 @@ function on_place_entered(city) {
                     let country_code = results[0].address_components[2].short_name;
                     let location = results[0].geometry.location;
 
-                    // TODO
-                    //view_model.current_country(find_country(country_code, view_model));
+                    view_model.current_country(country_code);
                     create_restaurant_list_and_markers(location.lat(), location.lng(), 0);
                     set_current_location(location.lat(), location.lng());
                 } else {
@@ -388,7 +370,7 @@ function create_restaurant_list_and_markers(lat, lng, start) {
 // Populate category list by fetching all the cuisines in all the restaurants
 function populate_category_list(view_model) {
     $.each(view_model.restaurant_list(), function() {
-        $.each(this.categories(), function() {
+        $.each(this.categories, function() {
             let category = String(this);
             // Make sure that all the categories saved do not have duplicates
             let match = ko.utils.arrayFirst(view_model.category_list(), function(item) {
@@ -408,9 +390,7 @@ function populate_restaurant_list_from_json(restaurants, view_model) {
     let count = 0;
 
     $.each(restaurants, function() {
-        let restaurant = new Restaurant();
-        restaurant.create_from_json(this.restaurant);
-        view_model.restaurant_list.push(restaurant);
+        view_model.restaurant_list.push(new Restaurant(this.restaurant, 'json'));
         restaurant_array.push(view_model.restaurant_list()[count]);
         count++;
     });
@@ -424,9 +404,7 @@ function populate_restaurant_list_from_localstorage(view_model) {
     let restaurants = get_restaurants();
 
     $.each(restaurants, function() {
-        let restaurant = new Restaurant();
-        restaurant.create_from_search(this);
-        view_model.restaurant_list.push(restaurant);
+        view_model.restaurant_list.push(new Restaurant(this, 'search'));
     });
 }
 
@@ -498,7 +476,7 @@ function populate_infowindow(marker, restaurant) {
         infowindow.close();
         infowindow.setContent('');
         infowindow.marker = marker;
-        let rst_id = restaurant.restaurant_id();
+        let rst_id = restaurant.restaurant_id;
         let details_url = `https://developers.zomato.com/api/v2.1/restaurant?res_id=${rst_id}`;
         let review_url = `https://developers.zomato.com/api/v2.1/reviews?res_id=${rst_id}&count=5`
         let restaurant_html = '';
@@ -507,7 +485,6 @@ function populate_infowindow(marker, restaurant) {
         $.ajax({
             type: 'GET',
             dataType: 'json',
-            // TODO - Make a way for the user to insert their own API KEY
             headers: { 'user-key': ZOMATO_KEY },
             url: details_url
         }).done(function(result) {
@@ -550,10 +527,10 @@ function init_markers(restaurant_list, bounds) {
         let marker = new google.maps.Marker({
             position: location,
             animation: google.maps.Animation.DROP,
-            title: this.name(),
+            title: this.name,
             map: map,
         });
-        let copy_marker;
+
         marker.addListener('click', function() {
             map.panTo(location);
             map.setZoom(17);
@@ -623,8 +600,14 @@ function show_all_markers() {
 
 $(window).ready(function() {
     let rq = get_result_query();
-    let prev = parseInt(rq.prev);
-    if (prev == -1) view_model.prev_disabled(true);
+    let prev;
+    if (!rq) {
+        prev = -1;
+    } else {
+        prev = parseInt(rq.prev);
+    }
+
+    if (!prev || prev == -1) view_model.prev_disabled(true);
 });
 
 let view_model = new ViewModel();
