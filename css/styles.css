@@ -225,6 +225,14 @@ li:focus {
     transition: 0.3s width;
 }
 
+.toggled {
+    width: 100%;
+}
+
+.not_toggled {
+    width: calc(100% - 330px) !important;
+}
+
 .infowindow-container {
     width: 250px;
 }

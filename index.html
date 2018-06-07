@@ -12,12 +12,12 @@
 
 <body>
     <header>
-        <img src="img/burger.svg" alt="burger icon to toggle the side bar">
+        <img data-bind="click: toggle_burger" src="img/burger.svg" alt="burger icon to toggle the side bar">
         <h1>Restaurant Finder</h1>
     </header>
     <main class="flex">
-        <aside>
-            <section class="location-container">
+        <aside data-bind="css: {slide: toggled}">
+            <section class="location-container" data-bind="css: {hide: toggled}">
                 <div class="toggle flex" id="location-toggle">
                     <p>LOCATION</p>
                     <svg class="arrow-down" width="50" height="50" xmlns="http://www.w3.org/2000/svg">
@@ -41,7 +41,7 @@
                     </form>
                 </div>
             </section>
-            <section class="filter-container">
+            <section class="filter-container" data-bind="css: {hide: toggled}">
                 <div class="toggle flex" id="filter-toggle">
                     <p>FILTERS</p>
                     <svg class="arrow-down" width="50" height="50" xmlns="http://www.w3.org/2000/svg">
@@ -54,7 +54,7 @@
                     <label for="category-list">Category:</label>
                     <select id="category-list" class="ui-category-list" data-bind="options: category_list, value: current_category"></select>
                     <span>Average Cost for Two:</span>
-                    <div id="cost-slider" class="ui-slider" data-bind="slider: cost_filter, sliderOptions: { value: 5000,
+                    <div id="cost-slider" class="ui-slider" data-bind="slider: cost_filter, css: {hide: toggled}, sliderOptions: { value: 5000,
                                                                                                                         min: 500,
                                                                                                                         max: 5000,
                                                                                                                         step: 50,
@@ -66,7 +66,7 @@
                                                                                                                             let handle = $('#custom-handle');
                                                                                                                             handle.text(`₱ ${ui.value}`);
                                                                                                                         }}">
-                        <div id="custom-handle" class="ui-slider-handle"></div>
+                        <div data-bind="css: {hide: toggled}" id="custom-handle" class="ui-slider-handle"></div>
                     </div>
                     <div class="filter-buttons flex">
                         <a id="search" href="#" data-bind="click: search_restaurants">Search</a>
@@ -96,7 +96,7 @@
                 </div>
             </section>
         </aside>
-        <section id="map" class="map-canvas"></section>
+        <section id="map" class="map-canvas" data-bind="css: {toggled: toggled, not_toggled: toggled() == false}"></section>
     </main>
     <script defer src="js/jquery.min.js"></script>
     <script defer src="js/jquery-ui.min.js"></script>

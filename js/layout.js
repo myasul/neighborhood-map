@@ -1,6 +1,4 @@
 (function() {
-    let toggled = false;
-    let location_height;
     let location_container_open;
     let location_container_close;
     let filter_container_open;
@@ -10,37 +8,6 @@
     let filter;
     let location;
     let restaurant;
-
-    // Burger icon that will toggle to display the side bar
-    $('header img').click(function() {
-        $('aside').toggleClass('slide');
-        $('.filter-container').toggleClass('hide');
-        $('.location-container').toggleClass('hide');
-        $('#cost-slider').toggleClass('hide');
-        $('#custom-handle').toggleClass('hide');
-        if (!toggled) {
-            $('#map').width('100%');
-            toggled = true;
-        } else {
-            $('#map').css('width', 'calc(100% - 330px)');
-            toggled = false;
-        }
-
-    });
-
-    // Hide the side bar if the screen of the user is less than 950px
-    $(window).resize(function() {
-        if ($(window).width() <= 950) {
-            $('aside').addClass('slide');
-            $('.filter-container').addClass('hide');
-            $('.location-container').addClass('hide');
-            $('#cost-slider').addClass('hide');
-            $('#custom-handle').addClass('hide');
-            $('#map').width('100%');
-            toggled = true;
-        }
-    })
-
 
     $(window).ready(function() {
         // Collect all the height measurements once the page is ready.
@@ -57,18 +24,6 @@
         restaurant = $('#restaurant').height();
         restaurant_container_open = $('.restaurant-container').height();
         restaurant_container_close = $('.restaurant-container').height() - restaurant;
-
-        // Hide the restaurant list if the screen of the user is less
-        // than 950 pixels (applies to tablets and mobile phones)
-        if ($(window).width() <= 950) {
-            $('aside').addClass('slide');
-            $('.filter-container ').addClass('hide');
-            $('.location-container').toggleClass('hide');
-            $('#cost-slider').addClass('hide');
-            $('#custom-handle').addClass('hide');
-            $('#map').width('100%');
-            toggled = true;
-        }
     });
 
 
@@ -128,10 +83,10 @@
         let degree_to;
 
         if ($(this).next('.open').length) {
-            degree_from = '180'
+            degree_from = '180';
             degree_to = '360';
         } else {
-            degree_from = '0'
+            degree_from = '0';
             degree_to = '180';
         }
 

@@ -87,6 +87,8 @@ let ViewModel = function() {
     this.prev_disabled = ko.observable(false);
     this.next_disabled = ko.observable(false);
 
+    this.toggled = ko.observable(false);
+
     // Currently, the list of restaurants is saved in retaurants_zomato.json
     // I used Zomato /search API to fetch the list of restaurants within the vicinity of Taguig.
     if (localStorage.length === 0 || get_restaurants() === 0) {
@@ -589,6 +591,16 @@ function show_markers(restaurant_list) {
     });
 }
 
+// Function that would determine if the side section would
+// be displayed or not.
+function toggle_burger() {
+    if (view_model.toggled()) {
+        view_model.toggled(false);
+    } else {
+        view_model.toggled(true);
+    }
+}
+
 $(window).ready(function() {
     let rq = get_result_query();
     let prev;
@@ -600,6 +612,20 @@ $(window).ready(function() {
     // Previous button should be disabled by default if the restaurant list
     // provided by Zomato is the first list of its restaurants.
     if (!prev || prev == -1) view_model.prev_disabled(true);
+
+    // Side section should be hidden by default if the webpage is viewed 
+    // in a smaller screen e.g. tablet or mobile phone.
+    if ($(window).width() <= 950) {
+        view_model.toggled(true);
+    }
+});
+
+// Side section should be hidden if the user resizes the browser 
+// to 950px or lower.
+$(window).resize(function() {
+    if ($(window).width() <= 950) {
+        view_model.toggled(true);
+    }
 });
 
 let view_model = new ViewModel();
