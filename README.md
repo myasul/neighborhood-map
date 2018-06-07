@@ -8,6 +8,7 @@ This website allows the user to browse restaurants in different cities that is s
 -ugh the list of restaurants.
 
 __Pre-requisites__
+- Install Python 3. http://docs.python-guide.org/en/latest/starting/installation/
 - Setup Google Map Javascript API.
   - Get an API key by following the instructons in this link - https://developers.google.com/maps/documentation/javascript/get-api-key.
   - Open index.html and insert your API key in,
@@ -36,6 +37,18 @@ __Pre-requisites__
     https://developers.zomato.com/documentation#!/restaurant/search
     - Save the result as restaurants_zomato.json.
     
+__Deployment__
+- Make sure that you have downloaded python properly by running ```python --version``` in your terminal (output should be something like this ```Python 3.6.1```.)
+- Go to the folder where you have downloaded/cloned this project. This is where index.html can be found.
+- Run the command below. Default port is 8000.
+```python
+python -m SimpleHTTPServer <port you want to use>
+```
+-  You can access the webpage via the following URLs (Update port as necessary):
+
+    - http://localhost:8000
+    - http://127.0.0.1:8000
+  
 __Features__
 - Users can search restaurants depending on the country and city they have provided in the location section.
 - Filters (category and average cost for two) can be used to further assist the user in searching through the restaurant list.
