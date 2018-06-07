@@ -164,7 +164,7 @@ select,
 }
 
 .restaurant-container {
-    height: 38vh;
+    height: 39vh;
     transition: 0.5s height ease;
 }
 
@@ -254,7 +254,7 @@ li:focus {
     }
 }
 
-@media screen and (max-height: 670px) {
+@media screen and (max-height: 677px) {
     select {
         background-color: rgb(248, 248, 248);
         border-width: 1px;
@@ -275,6 +275,6 @@ li:focus {
         height: calc(35vh - 1px);
     }
     .restaurant-container {
-        height: 32vh;
+        height: 33vh;
     }
 }
