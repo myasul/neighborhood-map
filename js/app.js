@@ -435,6 +435,8 @@ function populate_country_list(view_model) {
     });
 }
 
+// Use Zomato API to retrieve and populate current country using the 
+// city ID saved in each of the restaurants.
 function populate_current_country(view_model, city_id) {
     $.ajax({
         type: 'GET',
@@ -469,6 +471,8 @@ function get_currency() {
     return country.currency;
 }
 
+// Finding the country in the country list.
+// Function accepts the whole name or the country code.
 function find_country(country_to_find, code_or_name) {
     let match;
     if (code_or_name === 0) {
