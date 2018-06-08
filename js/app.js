@@ -1,3 +1,4 @@
+'use strict';
 let map;
 let infowindow;
 let autocomplete;
@@ -35,26 +36,20 @@ ko.bindingHandlers.slider = {
 
 // Restaurant Model
 let Restaurant = function(data, type) {
-    if (type == 'json') {
-        this.restaurant_id = data.id;
-        this.location = new Location(data.location.latitude, data.location.longitude);
-        this.name = data.name;
-        this.selected = ko.observable(false);
-        this.categories = data.cuisines.split(', ');
-        this.average_cost_for_two = data.average_cost_for_two;
-        this.displayed = ko.observable(true);
-        this.marker = null;
-    } else {
-        this.restaurant_id = data.restaurant_id;
-        this.location = new Location(data.location.lat, data.location.lng);
-        this.name = data.name;
-        this.selected = ko.observable(data.selected);
-        this.categories = data.categories;
-        this.average_cost_for_two = data.average_cost_for_two;
-        this.displayed = ko.observable(true);
-        this.marker = null;
-    }
+    this.id = data.id;
+    this.location = new Location(data.location);
+    this.name = data.name;
+    this.average_cost_for_two = data.average_cost_for_two;
+    this.displayed = ko.observable(true);
+    this.marker = null;
 
+    if (type == 'json') {
+        this.categories = data.cuisines.split(', ');
+        this.selected = ko.observable(false);
+    } else {
+        this.categories = data.categories;
+        this.selected = ko.observable(data.selected);
+    }
 };
 
 // Country Model
@@ -65,9 +60,10 @@ let Country = function(data) {
 };
 
 // Location Model
-let Location = function(lat, lng) {
-    this.lat = lat;
-    this.lng = lng;
+let Location = function(location) {
+    this.latitude = location.latitude;
+    this.longitude = location.longitude;
+    this.city_id = location.city_id;
 };
 
 /* INITIALIZE VIEW MODEL */
@@ -100,6 +96,7 @@ let ViewModel = function() {
         }).done(function(json) {
             set_result_query(20, -1);
             set_current_location(DFLT_LOCATION.lat, DFLT_LOCATION.lng);
+            populate_country_list(self);
             populate_restaurant_list_from_json(json.restaurants, self);
             populate_category_list(self);
             init_map(self);
@@ -108,6 +105,7 @@ let ViewModel = function() {
             alert('An error has been encountered. Please consult with your system administrator.');
         });
     } else {
+        populate_country_list(self);
         populate_restaurant_list_from_localstorage(self);
         populate_category_list(self);
         init_map(self);
@@ -138,23 +136,12 @@ let ViewModel = function() {
         on_place_entered(self.current_city());
     };
 
-    // Populate the country drop down.
-    $.getJSON('countries.json', function(json) {
-        $.each(json, function() {
-            self.country_list.push(new Country(this));
-        });
-
-        // Defautl current country is Philippines.
-        self.current_country('PH');
-    }).fail(function(error) {
-        console.log(error.responseText);
-        alert('An error has been encountered. Please consult with your system administrator.');
-    });
-
     // Set the country restriction depending on the country that
     // the user picked in the country list
     this.country_change = function() {
-        autocomplete.setComponentRestrictions(get_country());
+        if (autocomplete) {
+            autocomplete.setComponentRestrictions(get_country());
+        }
     };
 };
 
@@ -272,7 +259,7 @@ function next_restaurants() {
         set_result_query(next + 20, next - 20);
     }
 
-    create_restaurant_list_and_markers(location.lat, location.lng, next);
+    create_restaurant_list_and_markers(location.latitude, location.longitude, next);
 }
 
 
@@ -292,7 +279,7 @@ function previous_restaurants() {
     } else {
         set_result_query(next - 20, prev - 20);
     }
-    create_restaurant_list_and_markers(location.lat, location.lng, prev);
+    create_restaurant_list_and_markers(location.latitude, location.longitude, prev);
 }
 
 /* LOCATION functions */
@@ -304,10 +291,8 @@ function on_place_changed() {
     let place = autocomplete.getPlace();
 
     if (place.geometry) {
-        let country_code = place.address_components[2].short_name;
         let location = place.geometry.location;
 
-        view_model.current_country(country_code);
         create_restaurant_list_and_markers(location.lat(), location.lng(), 0);
         set_current_location(location.lat(), location.lng());
     } else {
@@ -330,10 +315,8 @@ function on_place_entered(city) {
             },
             function(results, status) {
                 if (status == google.maps.GeocoderStatus.OK) {
-                    let country_code = results[0].address_components[2].short_name;
                     let location = results[0].geometry.location;
 
-                    view_model.current_country(country_code);
                     create_restaurant_list_and_markers(location.lat(), location.lng(), 0);
                     set_current_location(location.lat(), location.lng());
                 } else {
@@ -360,11 +343,11 @@ function create_restaurant_list_and_markers(lat, lng, start) {
             view_model.restaurant_list.removeAll();
             view_model.category_list.removeAll();
             bounds = new google.maps.LatLngBounds();
-            let empty_restaurants = view_model.restaurant_list().length === 0;
 
             populate_restaurant_list_from_json(result.restaurants, view_model);
             populate_category_list(view_model);
 
+            let empty_restaurants = view_model.restaurant_list().length === 0;
             if (!empty_restaurants) {
                 bounds = init_markers(view_model, bounds);
                 // Make sure that all markers are visible in the map
@@ -406,13 +389,20 @@ function populate_category_list(view_model) {
 function populate_restaurant_list_from_json(restaurants, view_model) {
     let restaurant_array = [];
     let count = 0;
+    let get_city = false;
+    let city_id;
 
     $.each(restaurants, function() {
+        if (!get_city) {
+            city_id = this.restaurant.location.city_id;
+            get_city = true;
+        }
         view_model.restaurant_list.push(new Restaurant(this.restaurant, 'json'));
         restaurant_array.push(view_model.restaurant_list()[count]);
         count++;
     });
     localStorage.setItem('restaurants', ko.toJSON(restaurant_array));
+    populate_current_country(view_model, city_id);
 }
 
 // Function that will create a restaurant list from the 
@@ -420,9 +410,44 @@ function populate_restaurant_list_from_json(restaurants, view_model) {
 function populate_restaurant_list_from_localstorage(view_model) {
     view_model.restaurant_list.removeAll();
     let restaurants = get_restaurants();
+    let get_city = false;
+    let city_id;
 
     $.each(restaurants, function() {
+        if (!get_city) {
+            city_id = this.location.city_id;
+            get_city = true;
+        }
         view_model.restaurant_list.push(new Restaurant(this, 'search'));
+    });
+    populate_current_country(view_model, city_id);
+}
+
+// Populate the country drop down.
+function populate_country_list(view_model) {
+    $.getJSON('countries.json', function(json) {
+        $.each(json, function() {
+            view_model.country_list.push(new Country(this));
+        });
+    }).fail(function(error) {
+        console.log(error.responseText);
+        alert('An error has been encountered. Please consult with your system administrator.');
+    });
+}
+
+function populate_current_country(view_model, city_id) {
+    $.ajax({
+        type: 'GET',
+        dataType: 'json',
+        url: `https://developers.zomato.com/api/v2.1/cities?city_ids=${city_id}`,
+        headers: { 'user-key': ZOMATO_KEY },
+    }).done(function(json) {
+        let country_name = json.location_suggestions[0].country_name;
+        let country = find_country(country_name, 1);
+        view_model.current_country(country.code);
+    }).fail(function(error) {
+        console.log(error.responseText);
+        alert('An error has been encountered. Please consult with your system administrator.');
     });
 }
 
@@ -440,17 +465,24 @@ function get_country() {
 }
 
 function get_currency() {
-    let country = find_country(view_model.current_country());
+    let country = find_country(view_model.current_country(), 0);
     return country.currency;
 }
 
-function find_country(country_code) {
-    let country = ko.utils.arrayFirst(view_model.country_list(), function(country) {
-        return country.code == country_code;
-    });
+function find_country(country_to_find, code_or_name) {
+    let match;
+    if (code_or_name === 0) {
+        match = ko.utils.arrayFirst(view_model.country_list(), function(country) {
+            return country.code == country_to_find;
+        });
+    } else {
+        match = ko.utils.arrayFirst(view_model.country_list(), function(country) {
+            return country.name == country_to_find;
+        });
+    }
 
-    if (country) {
-        return country;
+    if (match) {
+        return match;
     }
     return null;
 }
@@ -539,8 +571,8 @@ function init_markers(view_model, bounds) {
     $.each(view_model.restaurant_list(), function() {
         let location = {};
         let self = this;
-        location.lat = parseFloat(this.location.lat);
-        location.lng = parseFloat(this.location.lng);
+        location.lat = parseFloat(this.location.latitude);
+        location.lng = parseFloat(this.location.longitude);
         let marker = new google.maps.Marker({
             position: location,
             animation: google.maps.Animation.DROP,
@@ -574,7 +606,9 @@ function toggle_bounce(marker) {
 
 function hide_markers() {
     $.each(view_model.restaurant_list(), function() {
-        this.marker.setMap(null);
+        if (this.marker) {
+            this.marker.setMap(null);
+        }
     });
 }
 
