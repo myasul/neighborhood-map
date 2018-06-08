@@ -76,7 +76,7 @@
         }
     }
 
-    // Animate the arrow head when 
+    // Animate the arrow head when toggle headers are clicked
     $('.toggle').click(function() {
         let elem = $('svg', this);
         let degree_from;
