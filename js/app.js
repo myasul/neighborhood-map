@@ -234,6 +234,8 @@ function search_restaurants() {
 // show all the restaurants and markers.
 function show_all_restaurants() {
     infowindow.close();
+    this.current_category('All');
+    this.cost_filter(5000);
 
     // clear lists first before populating them.
     map.fitBounds(bounds);
@@ -258,8 +260,7 @@ function next_restaurants() {
     } else {
         set_result_query(next + 20, next - 20);
     }
-
-    create_restaurant_list_and_markers(location.latitude, location.longitude, next);
+    create_restaurant_list_and_markers(location.lat, location.lng, next);
 }
 
 
@@ -279,7 +280,7 @@ function previous_restaurants() {
     } else {
         set_result_query(next - 20, prev - 20);
     }
-    create_restaurant_list_and_markers(location.latitude, location.longitude, prev);
+    create_restaurant_list_and_markers(location.lat, location.lng, prev);
 }
 
 /* LOCATION functions */
@@ -288,6 +289,9 @@ function previous_restaurants() {
 // from the list suggested by Google's autocomplete.
 // Location selected will be used to create the restaurant list and markers.
 function on_place_changed() {
+    view_model.prev_disabled(true);
+    view_model.next_disabled(false);
+    view_model.cost_filter(5000);
     let place = autocomplete.getPlace();
 
     if (place.geometry) {
@@ -304,6 +308,9 @@ function on_place_changed() {
 // and click the enter button from the keyboard.
 // Location selected will be used to create the restaurant list and markers.
 function on_place_entered(city) {
+    view_model.prev_disabled(true);
+    view_model.next_disabled(false);
+    view_model.cost_filter(5000);
     let geocoder = new google.maps.Geocoder();
 
     if (!city) {
@@ -342,6 +349,7 @@ function create_restaurant_list_and_markers(lat, lng, start) {
             hide_markers();
             view_model.restaurant_list.removeAll();
             view_model.category_list.removeAll();
+            view_model.cost_filter(5000);
             bounds = new google.maps.LatLngBounds();
 
             populate_restaurant_list_from_json(result.restaurants, view_model);
@@ -530,7 +538,7 @@ function populate_infowindow(marker, restaurant) {
         infowindow.close();
         infowindow.setContent('');
         infowindow.marker = marker;
-        let rst_id = restaurant.restaurant_id;
+        let rst_id = restaurant.id;
         let details_url = `https://developers.zomato.com/api/v2.1/restaurant?res_id=${rst_id}`;
         let restaurant_html = '';
 
