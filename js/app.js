@@ -6,6 +6,7 @@ let bounds;
 const ZOMATO_KEY = '000e28228e4fb09d7e02710d59331fbe';
 const DFLT_LOCATION = { lat: '14.5408671', lng: '121.0503183' };
 
+
 // Slider Custom Binding
 // Code from https://stackoverflow.com/a/18331650
 ko.bindingHandlers.slider = {
@@ -97,18 +98,31 @@ let ViewModel = function() {
             set_result_query(20, -1);
             set_current_location(DFLT_LOCATION.lat, DFLT_LOCATION.lng);
             populate_country_list(self);
-            populate_restaurant_list_from_json(json.restaurants, self);
+            // Passing the current country using JQuery's deferred object
+            // to make sure autocomplete is initialized with the correct country
+            populate_restaurant_list_from_json(json.restaurants, self).then(function(result) {
+                init_map(self);
+            }).fail(function(error) {
+                console.log(error.responseText);
+                alert('An error has been encountered. Please consult with your system administrator.');
+            });
             populate_category_list(self);
-            init_map(self);
         }).fail(function(error) {
             console.log(error.responseText);
             alert('An error has been encountered. Please consult with your system administrator.');
         });
     } else {
         populate_country_list(self);
-        populate_restaurant_list_from_localstorage(self);
+        // Passing the current country using JQuery's deferred object
+        // to make sure autocomplete is initialized with the correct country
+        populate_restaurant_list_from_localstorage(self).then(function(result) {
+            init_map(self);
+        }).fail(function(error) {
+            console.log(error.responseText);
+            alert('An error has been encountered. Please consult with your system administrator.');
+        });
         populate_category_list(self);
-        init_map(self);
+
     }
 
     // Setting the current restaurant will be triggered when the user clicks
@@ -145,6 +159,9 @@ let ViewModel = function() {
     };
 };
 
+let view_model = new ViewModel();
+ko.applyBindings(view_model);
+
 /* INITIALIZE MAP */
 function init_map(view_model) {
     map = new google.maps.Map($('#map').get(0), {
@@ -158,7 +175,7 @@ function init_map(view_model) {
     autocomplete = new google.maps.places.Autocomplete(
         ($('#city_autocomplete').get(0)), {
             types: ['(cities)'],
-            componentRestrictions: { country: 'PH' }
+            componentRestrictions: { country: view_model.current_country() }
         }
     );
 
@@ -171,7 +188,6 @@ function init_map(view_model) {
     // Make sure that all markers are visible in the map
     map.fitBounds(bounds);
     map.setZoom(17);
-
 }
 
 /* FILTER Controllers */
@@ -410,7 +426,7 @@ function populate_restaurant_list_from_json(restaurants, view_model) {
         count++;
     });
     localStorage.setItem('restaurants', ko.toJSON(restaurant_array));
-    populate_current_country(view_model, city_id);
+    return populate_current_country(view_model, city_id);
 }
 
 // Function that will create a restaurant list from the 
@@ -428,7 +444,7 @@ function populate_restaurant_list_from_localstorage(view_model) {
         }
         view_model.restaurant_list.push(new Restaurant(this, 'search'));
     });
-    populate_current_country(view_model, city_id);
+    return populate_current_country(view_model, city_id);
 }
 
 // Populate the country drop down.
@@ -446,7 +462,7 @@ function populate_country_list(view_model) {
 // Use Zomato API to retrieve and populate current country using the 
 // city ID saved in each of the restaurants.
 function populate_current_country(view_model, city_id) {
-    $.ajax({
+    return $.ajax({
         type: 'GET',
         dataType: 'json',
         url: `https://developers.zomato.com/api/v2.1/cities?city_ids=${city_id}`,
@@ -673,6 +689,3 @@ $(window).resize(function() {
         view_model.toggled(true);
     }
 });
-
-let view_model = new ViewModel();
-ko.applyBindings(view_model);
