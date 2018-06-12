@@ -250,8 +250,8 @@ function search_restaurants() {
 // show all the restaurants and markers.
 function show_all_restaurants() {
     infowindow.close();
-    this.current_category('All');
-    this.cost_filter(5000);
+    view_model.current_category('All');
+    view_model.cost_filter(5000);
 
     // clear lists first before populating them.
     map.fitBounds(bounds);
