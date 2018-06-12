@@ -95,7 +95,7 @@ let ViewModel = function() {
             url: `https://developers.zomato.com/api/v2.1/search?lat=${DFLT_LOCATION.lat}&lon=${DFLT_LOCATION.lng}&radius=2000&category=8%2C9%2C10&sort=real_distance&order=desc`,
             headers: { 'user-key': ZOMATO_KEY },
         }).done(function(json) {
-            set_result_query(20, -1);
+            reset_result_query();
             set_current_location(DFLT_LOCATION.lat, DFLT_LOCATION.lng);
             populate_country_list(self);
             // Passing the current country using JQuery's deferred object
@@ -305,7 +305,7 @@ function previous_restaurants() {
 // from the list suggested by Google's autocomplete.
 // Location selected will be used to create the restaurant list and markers.
 function on_place_changed() {
-    reset_arrows();
+    reset_result_query();
     let place = autocomplete.getPlace();
 
     if (place.geometry) {
@@ -322,7 +322,7 @@ function on_place_changed() {
 // and click the enter button from the keyboard.
 // Location selected will be used to create the restaurant list and markers.
 function on_place_entered(city) {
-    reset_arrows();
+    reset_result_query();
     let geocoder = new google.maps.Geocoder();
 
     if (!city) {
@@ -345,9 +345,10 @@ function on_place_entered(city) {
     }
 }
 
-function reset_arrows() {
+function reset_result_query() {
     view_model.prev_disabled(true);
     view_model.next_disabled(false);
+    set_result_query(20, -1);
 }
 
 /* FUNCTIONS that manipulate the list and markers. */
@@ -379,6 +380,10 @@ function create_restaurant_list_and_markers(lat, lng, start) {
                 map.fitBounds(bounds);
             }
         } else {
+            // Revert the result query.
+            let rq = get_result_query();
+            set_result_query(start - 20, rq.prev - 20);
+
             view_model.next_disabled(true);
             alert('No more restaurants found.\n' +
                 'Please check out the previous restaurants by clicking the left arrow button or ' +
