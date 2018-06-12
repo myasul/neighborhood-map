@@ -305,9 +305,7 @@ function previous_restaurants() {
 // from the list suggested by Google's autocomplete.
 // Location selected will be used to create the restaurant list and markers.
 function on_place_changed() {
-    view_model.prev_disabled(true);
-    view_model.next_disabled(false);
-    view_model.cost_filter(5000);
+    reset_arrows();
     let place = autocomplete.getPlace();
 
     if (place.geometry) {
@@ -324,9 +322,7 @@ function on_place_changed() {
 // and click the enter button from the keyboard.
 // Location selected will be used to create the restaurant list and markers.
 function on_place_entered(city) {
-    view_model.prev_disabled(true);
-    view_model.next_disabled(false);
-    view_model.cost_filter(5000);
+    reset_arrows();
     let geocoder = new google.maps.Geocoder();
 
     if (!city) {
@@ -347,6 +343,11 @@ function on_place_entered(city) {
                 }
             });
     }
+}
+
+function reset_arrows() {
+    view_model.prev_disabled(true);
+    view_model.next_disabled(false);
 }
 
 /* FUNCTIONS that manipulate the list and markers. */
